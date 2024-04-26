@@ -4,6 +4,7 @@ import io.github.itzispyder.improperui.render.constants.Alignment;
 import io.github.itzispyder.improperui.render.constants.Position;
 import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.render.math.Dimensions;
+import io.github.itzispyder.improperui.script.CallbackHandler;
 import io.github.itzispyder.improperui.script.ScriptArgs;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
@@ -282,6 +283,8 @@ public class Element {
                 try {
                     if (method.getParameterCount() == 0 || method.getParameters()[0].getType() != Element.class)
                         error("specified callback method must have one parameter: io.github.itzispyder.improperui.render.Element");
+                    if (method.getAnnotation(CallbackHandler.class) == null)
+                        error("specified callback method must have annotation: @io.github.itzispyder.improperui.script.CallbackHandler");
                     method.setAccessible(true);
                     method.invoke(null, this);
                 }

@@ -7,6 +7,8 @@ element {
     y: 42
     size: 54 45
 
+    click-action: nameThisCallbackAnything
+
     element {
         border-radius: 69420
 
