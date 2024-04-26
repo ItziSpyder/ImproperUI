@@ -1,26 +1,36 @@
 package io.github.itzispyder.improperui.render;
 
 import io.github.itzispyder.improperui.render.constants.Alignment;
+import io.github.itzispyder.improperui.render.constants.Position;
 import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.render.math.Dimensions;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Element {
 
+    public Position position;
     public int marginLeft, marginRight, marginTop, marginBottom;
     public int paddingLeft, paddingRight, paddingTop, paddingBottom;
     public int x, y, width, height;
     public Color borderColor, fillColor, shadowColor;
     public int borderThickness, borderRadius, shadowDistance;
-    public String clickAction, startHoverAction, stopHoverAction;
+    public String rightClickAction, leftClickAction, middleClickAction, scrollAction, startHoverAction, stopHoverAction;
     public Alignment textAlignment;
     public String innerText;
     public float textScale;
     public boolean textShadow;
+    private Element parent;
+    private final List<Element> children;
 
     public Element(int x, int y, int width, int height) {
+        children = new ArrayList<>();
+        position = Position.INHERIT;
+
         this.x = x;
         this.y = y;
         this.width = width;
@@ -72,9 +82,12 @@ public class Element {
         return this;
     }
 
-    public Element clickAction(String clickAction) {
-        this.clickAction = clickAction;
-        return this;
+    public int getPosX() {
+        return (position == Position.INHERIT && parent != null) ? (parent.x + x) : x;
+    }
+
+    public int getPosY() {
+        return (position == Position.INHERIT && parent != null) ? (parent.y + y) : y;
     }
 
     public Dimensions getRawDimensions() {
@@ -82,16 +95,33 @@ public class Element {
     }
 
     public Dimensions getDimensions() {
-        int x = this.x - paddingLeft - marginLeft;
-        int y = this.y - paddingTop - marginTop;
+        int x = getPosX() - paddingLeft - marginLeft;
+        int y = getPosY() - paddingTop - marginTop;
         int width = this.width + marginLeft + paddingLeft + paddingRight + marginRight;
         int height = this.height + marginTop + paddingTop + paddingBottom + marginBottom;
         return new Dimensions(x, y, width, height);
     }
 
+    public void addChild(Element child) {
+        if (child == null || child == this || child.parent != null || children.contains(child))
+            return;
+        children.add(child);
+        child.parent = this;
+    }
+
+    public void removeChild(Element child) {
+        if (child == null)
+            return;
+        child.parent = null;
+        children.remove(child);
+    }
+
     // built-in
 
     public void onRender(DrawContext context, float delta) {
+        int x = getPosX();
+        int y = getPosY();
+
         RenderUtils.fillRoundShadow(context,
                 x - paddingLeft,
                 y - paddingTop,
@@ -121,8 +151,20 @@ public class Element {
         }
     }
 
-    public void onClick() {
-        tryInvoke(clickAction);
+    public void onRightClick() {
+        tryInvoke(rightClickAction);
+    }
+
+    public void onLeftClick() {
+        tryInvoke(leftClickAction);
+    }
+
+    public void onMiddleClick() {
+        tryInvoke(middleClickAction);
+    }
+
+    public void onScroll() {
+        tryInvoke(scrollAction);
     }
 
     public void onStartHover() {
@@ -134,7 +176,7 @@ public class Element {
     }
 
     private void tryInvoke(String methodName) throws IllegalArgumentException {
-        if (methodName == null)
+        if (methodName == null || methodName.trim().isEmpty())
             return;
 
         var methods = this.getClass().getDeclaredMethods();
@@ -152,10 +194,25 @@ public class Element {
                 return;
             }
         }
-        error("method \"%s.%s\" not found!", this.getClass().getSimpleName(), clickAction);
+        error("method \"%s.%s\" not found!", this.getClass().getSimpleName(), methodName);
     }
 
     public void error(String message, Object... args) {
         throw new IllegalArgumentException(message.formatted(args));
+    }
+
+    @Override
+    public String toString() {
+        return "Element:{dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouse:['%s','%s','%s','%s'],hoverAction:['%s','%s'],text:[%s,%s,'%s',%s]}".formatted(
+                x, y, width, height,
+                marginLeft, marginRight, marginTop, marginBottom,
+                paddingLeft, paddingRight, paddingTop, paddingBottom,
+                borderThickness, borderRadius, borderColor,
+                fillColor,
+                shadowDistance, shadowColor,
+                rightClickAction, leftClickAction, middleClickAction, scrollAction,
+                startHoverAction, stopHoverAction,
+                textScale, textAlignment, innerText, textShadow
+        );
     }
 }

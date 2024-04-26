@@ -34,6 +34,10 @@ public class Dimensions {
         return topLeft || topRight || bottomLeft || bottomRight;
     }
 
+    public boolean contains(int x, int y) {
+        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+    }
+
     public int getX() {
         return x;
     }

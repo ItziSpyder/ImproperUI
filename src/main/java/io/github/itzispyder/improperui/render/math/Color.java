@@ -180,7 +180,7 @@ public class Color {
 
     @Override
     public String toString() {
-        return "%s[a=%s, r=%s, g=%s, b=%s]".formatted(Integer.toHexString(hex), a, r, g, b);
+        return "#" + Integer.toHexString(hex).toUpperCase();
     }
 
     @Override
