@@ -210,14 +210,24 @@ public class Element {
         int y = getPosY();
 
         RenderUtils.fillRoundShadow(context,
+                x - paddingLeft - borderThickness,
+                y - paddingTop - borderThickness,
+                width + paddingLeft + paddingRight + borderThickness * 2,
+                height + paddingTop + paddingBottom + borderThickness * 2,
+                borderRadius,
+                shadowDistance,
+                shadowColor.getHex(),
+                shadowColor.getHexCustomAlpha(0)
+        );
+        RenderUtils.fillRoundShadow(context,
                 x - paddingLeft,
                 y - paddingTop,
                 width + paddingLeft + paddingRight,
                 height + paddingTop + paddingBottom,
                 borderRadius,
                 borderThickness,
-                shadowColor.getHex(),
-                shadowColor.getHexCustomAlpha(0)
+                borderColor.getHex(),
+                borderColor.getHex()
         );
         RenderUtils.fillRoundRect(context,
                 x - paddingLeft,
