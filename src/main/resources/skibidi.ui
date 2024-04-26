@@ -1,0 +1,26 @@
+
+
+element {
+    x: 69
+    y: 42
+    size: 54 45
+
+    element {
+        border-radius: 69420
+
+        element {
+            inner-text: "wassup skibidi fans"
+            border-color: #FF000330
+        }
+        element {
+            inner-text: "fanum taxation"
+            margin: 100
+            padding: 200
+        }
+    }
+
+    element {
+        inner-text: "wassup skibidi fans"
+        border-color: brown
+    }
+}

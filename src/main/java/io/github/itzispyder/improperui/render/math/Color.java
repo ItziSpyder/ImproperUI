@@ -30,8 +30,7 @@ public class Color {
 
             if (len != 6 && len != 8)
                 return result;
-
-            int hex = Integer.parseInt(color, 16);
+            int hex = Integer.parseUnsignedInt(color, 16);
             int a = len == 8 ? (hex >> 24 & 0xFF) : 0xFF;
             int r = hex >> 16 & 0xFF;
             int g = hex >> 8 & 0xFF;
