@@ -107,7 +107,7 @@ public class Element {
         registerProperty("inner-text", args -> innerText = args.getQuoteAndRemove());
         registerProperty("text-scale", args -> textScale = args.get(0).toFloat());
         registerProperty("text-shadow", args -> textShadow = args.get(0).toBool());
-        registerProperty("text-alignment", args -> textAlignment = args.get(0).toEnum(Alignment.class));
+        registerProperty("text-align", args -> textAlignment = args.get(0).toEnum(Alignment.class));
     }
 
     public Element margin(int margin) {
@@ -290,8 +290,9 @@ public class Element {
 
     @Override
     public String toString() {
-        return "Element:{children-count:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s]}".formatted(
+        return "Element:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s]}".formatted(
                 children.size(),
+                position,
                 x, y, width, height,
                 marginLeft, marginRight, marginTop, marginBottom,
                 paddingLeft, paddingRight, paddingTop, paddingBottom,
