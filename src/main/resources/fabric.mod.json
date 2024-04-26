@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "improperui",
+  "version": "${version}",
+  "name": "ImproperUI",
+  "description": "",
+  "authors": [],
+  "contact": {
+    "repo": "https://github.com/ItziSpyder/ImproperUI"
+  },
+  "license": "All-Rights-Reserved",
+  "icon": "assets/improperui/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "io.github.itzispyder.improperui.client.ImproperUIClient"
+    ],
+    "main": [
+      "io.github.itzispyder.improperui.ImproperUI"
+    ]
+  },
+  "mixins": [
+    "improperui.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
