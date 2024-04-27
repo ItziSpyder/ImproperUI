@@ -68,7 +68,7 @@ public class Element {
         textAlignment = Alignment.LEFT;
         textShadow = false;
 
-        childrenAlignment = ChildrenAlignment.GRID;
+        childrenAlignment = ChildrenAlignment.NONE;
         gridColumns = 1;
         visibility = Visibility.VISIBLE;
         backgroundClip = BackgroundClip.NONE;
@@ -81,33 +81,33 @@ public class Element {
     public void init() {
         registerProperty("position", args -> position = args.get(0).toEnum(Position.class));
 
-        registerProperty("x", args -> x = args.get(0).toInt());
-        registerProperty("y", args -> y = args.get(0).toInt());
-        registerProperty("width", args -> width = args.get(0).toInt());
-        registerProperty("height", args -> height = args.get(0).toInt());
-        registerProperty("pos", args -> position(args.get(0).toInt(), args.get(1).toInt()));
-        registerProperty("size", args -> size(args.get(0).toInt(), args.get(1).toInt()));
+        registerProperty("x", args -> x = parseIntValue(args.get(0), false));
+        registerProperty("y", args -> y = parseIntValue(args.get(0), true));
+        registerProperty("width", args -> width = parseIntValue(args.get(0), false));
+        registerProperty("height", args -> height = parseIntValue(args.get(0), true));
+        registerProperty("pos", args -> position(parseIntValue(args.get(0), false), parseIntValue(args.get(1), true)));
+        registerProperty("size", args -> size(parseIntValue(args.get(0), false), parseIntValue(args.get(1), true)));
 
-        registerProperty("padding-left", args -> paddingLeft = args.get(0).toInt());
-        registerProperty("padding-right", args -> paddingRight = args.get(0).toInt());
-        registerProperty("padding-top", args -> paddingTop = args.get(0).toInt());
-        registerProperty("padding-bottom", args -> paddingBottom = args.get(0).toInt());
-        registerProperty("padding", args -> padding(args.get(0).toInt()));
+        registerProperty("padding-left", args -> paddingLeft = parseIntValue(args.get(0), false));
+        registerProperty("padding-right", args -> paddingRight = parseIntValue(args.get(0), false));
+        registerProperty("padding-top", args -> paddingTop = parseIntValue(args.get(0), true));
+        registerProperty("padding-bottom", args -> paddingBottom = parseIntValue(args.get(0), true));
+        registerProperty("padding", args -> margin(parseIntValue(args.get(0), false)));
 
-        registerProperty("margin-left", args -> marginLeft = args.get(0).toInt());
-        registerProperty("margin-right", args -> marginRight = args.get(0).toInt());
-        registerProperty("margin-top", args -> marginTop = args.get(0).toInt());
-        registerProperty("margin-bottom", args -> marginBottom = args.get(0).toInt());
-        registerProperty("margin", args -> margin(args.get(0).toInt()));
+        registerProperty("margin-left", args -> marginLeft = parseIntValue(args.get(0), false));
+        registerProperty("margin-right", args -> marginRight = parseIntValue(args.get(0), false));
+        registerProperty("margin-top", args -> marginTop = parseIntValue(args.get(0), true));
+        registerProperty("margin-bottom", args -> marginBottom = parseIntValue(args.get(0), true));
+        registerProperty("padding", args -> padding(parseIntValue(args.get(0), false)));
 
-        registerProperty("border-thickness", args -> borderThickness = args.get(0).toInt());
-        registerProperty("border-radius", args -> borderRadius = args.get(0).toInt());
+        registerProperty("border-thickness", args -> borderThickness = parseIntValue(args.get(0), false));
+        registerProperty("border-radius", args -> borderRadius = parseIntValue(args.get(0), false));
         registerProperty("border-color", args -> borderColor = Color.parse(args.get(0).toString()));
-        registerProperty("border", args -> border(args.get(0).toInt(), args.get(1).toInt(), Color.parse(args.get(0).toString())));
+        registerProperty("border", args -> border(parseIntValue(args.get(0), false), parseIntValue(args.get(0), false), Color.parse(args.get(0).toString())));
 
         registerProperty("fill-color", args -> fillColor = Color.parse(args.get(0).toString()));
         registerProperty("shadow-color", args -> shadowColor = Color.parse(args.get(0).toString()));
-        registerProperty("shadow-distance", args -> shadowDistance = args.get(0).toInt());
+        registerProperty("shadow-distance", args -> shadowDistance = parseIntValue(args.get(0), false));
         registerProperty("shadow", args -> shadow(args.get(0).toInt(), Color.parse(args.get(0).toString())));
 
         registerProperty("right-click-action", args -> rightClickAction = args.get(0).toString());
@@ -147,6 +147,31 @@ public class Element {
         registerProperty("scrollable", args -> scrollable = args.get(0).toBool());
     }
 
+    private int parseIntValue(ScriptArgs.Arg arg, boolean forHeight) {
+        String str = arg.toString();
+        if (str.matches("\\d+$"))
+            return arg.toInt();
+
+        if (str.endsWith("%")) {
+            str = str.substring(0, str.length() - 1);
+            double percent = Integer.parseInt(str) / 100.0;
+            int len;
+
+            if (forHeight)
+                len = parent == null ? RenderUtils.height() : parent.height;
+            else
+                len = parent == null ? RenderUtils.width() : parent.width;
+            return (int)(len * percent);
+        }
+
+        double percent = Integer.parseInt(str.substring(0, str.length() - 2)) / 100.0;
+        if (str.endsWith("vw"))
+            return (int)(RenderUtils.width() * percent);
+        if (str.endsWith("vh"))
+            return (int)(RenderUtils.height() * percent);
+        return arg.toInt();
+    }
+
     public Element margin(int margin) {
         marginLeft = marginRight = marginTop = marginBottom = margin;
         return this;
@@ -183,11 +208,11 @@ public class Element {
     }
 
     public int getPosX() {
-        return (position == Position.INHERIT && parent != null) ? (parent.x + x) : x;
+        return (position == Position.INHERIT && parent != null) ? (parent.getPosX() + x) : x;
     }
 
     public int getPosY() {
-        return (position == Position.INHERIT && parent != null) ? (parent.y + y) : y;
+        return (position == Position.INHERIT && parent != null) ? (parent.getPosY() + y) : y;
     }
 
     public Dimensions getRawDimensions() {
@@ -329,17 +354,25 @@ public class Element {
         int x = getPosX();
         int y = getPosY();
 
+        /*
+        if ("#8000b7ff".equalsIgnoreCase(fillColor.toString())) {
+            String debug = String.format("parent:%s, parse:%s, x:%s", parent.width, parseIntValue(new ScriptArgs.Arg("100%"), false), x);
+            MinecraftClient.getInstance().player.sendMessage(Text.of(debug));
+        }
+
+         */
+
         if (visibility == Visibility.INVISIBLE)
             return;
 
-        boolean notOpaque = opacity < 1.0F;
-        if (notOpaque)
-            RenderSystem.setShaderColor(1, 1, 1, opacity);
-
         if (visibility != Visibility.ONLY_CHILDREN) {
+            boolean notOpaque = opacity < 1.0F;
+            if (notOpaque)
+                RenderSystem.setShaderColor(1, 1, 1, opacity);
+
             RenderUtils.fillRoundShadow(context,
-                    x - paddingLeft - borderThickness,
-                    y - paddingTop - borderThickness,
+                    x + marginLeft - paddingLeft - borderThickness,
+                    y + marginTop - paddingTop - borderThickness,
                     width + paddingLeft + paddingRight + borderThickness * 2,
                     height + paddingTop + paddingBottom + borderThickness * 2,
                     borderRadius,
@@ -348,8 +381,8 @@ public class Element {
                     shadowColor.getHexCustomAlpha(0)
             );
             RenderUtils.fillRoundShadow(context,
-                    x - paddingLeft,
-                    y - paddingTop,
+                    x + marginLeft - paddingLeft,
+                    y + marginTop - paddingTop,
                     width + paddingLeft + paddingRight,
                     height + paddingTop + paddingBottom,
                     borderRadius,
@@ -358,18 +391,18 @@ public class Element {
                     borderColor.getHex()
             );
             RenderUtils.fillRoundRect(context,
-                    x - paddingLeft,
-                    y - paddingTop,
+                    x + marginLeft - paddingLeft,
+                    y + marginTop - paddingTop,
                     width + paddingLeft + paddingRight,
                     height + paddingTop + paddingBottom,
                     borderRadius,
-                    shadowColor.getHex()
+                    fillColor.getHex()
             );
             if (backgroundImage != null) {
                 RenderUtils.drawRoundTexture(context,
                         backgroundImage,
-                        x - paddingLeft,
-                        y - paddingTop,
+                        x + marginLeft - paddingLeft,
+                        y + marginTop - paddingTop,
                         width + paddingLeft + paddingRight,
                         height + paddingTop + paddingBottom,
                         borderRadius
@@ -378,12 +411,18 @@ public class Element {
 
             if (innerText != null) {
                 Text text = Text.of(innerText);
+                x += marginLeft;
+                y += marginTop;
+                int textY = (int)(y + (height - (textScale * 10)) / 2);
                 switch (textAlignment) {
-                    case LEFT -> RenderUtils.drawDefaultScaledText(context, text, x, y + height / 3, textScale, textShadow);
-                    case CENTER -> RenderUtils.drawDefaultCenteredScaledText(context, text, x + width / 2, y + height / 3, textScale, textShadow);
-                    case RIGHT -> RenderUtils.drawDefaultRightScaledText(context, text, x + width, y + height / 3, textScale, textShadow);
+                    case LEFT -> RenderUtils.drawDefaultScaledText(context, text, x, textY, textScale, textShadow);
+                    case CENTER -> RenderUtils.drawDefaultCenteredScaledText(context, text, x + width / 2, textY, textScale, textShadow);
+                    case RIGHT -> RenderUtils.drawDefaultRightScaledText(context, text, x + width, textY, textScale, textShadow);
                 }
             }
+
+            if (notOpaque)
+                RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
         if (visibility != Visibility.ONLY_SELF) {
@@ -403,9 +442,6 @@ public class Element {
                 RenderSystem.disableScissor();
             }
         }
-
-        if (notOpaque)
-            RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
     public void onRenderChildren(DrawContext context, float delta) {

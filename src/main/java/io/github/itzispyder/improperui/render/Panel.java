@@ -120,7 +120,7 @@ public class Panel extends Screen {
     public void removeChild(Element child) {
         if (child == null)
             return;
-        child.parent = null;
+        child.parentPanel = null;
         children.remove(child);
     }
 
