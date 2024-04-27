@@ -21,7 +21,7 @@ public abstract class MinecraftClientMixin {
     @Inject(method = "doAttack", at = @At("HEAD"))
     public void setScreen(CallbackInfoReturnable<Boolean> cir) {
         if (crosshairTarget instanceof BlockHitResult hit && hit.getType() != HitResult.Type.MISS) {
-            ScriptParser.run(new File("resources/assets/improperui/scripts/screen.ui"));
+            ScriptParser.run(new File("screen.ui"));
         }
     }
 }

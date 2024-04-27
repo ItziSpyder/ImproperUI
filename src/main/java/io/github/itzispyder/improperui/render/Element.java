@@ -10,6 +10,7 @@ import io.github.itzispyder.improperui.util.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.RotationAxis;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -37,6 +38,7 @@ public class Element {
     public float opacity;
     public boolean draggable;
     public boolean scrollable;
+    public int rotateX, rotateY, rotateZ;
 
     public Element parent;
     public Panel parentPanel;
@@ -75,6 +77,7 @@ public class Element {
         backgroundClip = BackgroundClip.NONE;
         opacity = 1.0F;
         draggable = scrollable = false;
+        rotateX = rotateY = rotateZ = 0;
 
         this.init();
     }
@@ -166,6 +169,11 @@ public class Element {
         registerProperty("opacity", args -> opacity = args.get(0).toFloat());
         registerProperty("draggable", args -> draggable = args.get(0).toBool());
         registerProperty("scrollable", args -> scrollable = args.get(0).toBool());
+
+        registerProperty("rotate-x", args -> rotateX = args.get(0).toInt());
+        registerProperty("rotate-y", args -> rotateY = args.get(0).toInt());
+        registerProperty("rotate-z", args -> rotateZ = args.get(0).toInt());
+        registerProperty("rotate", args -> rotate(args.get(0).toInt(), args.get(1).toInt(), args.get(2).toInt()));
     }
 
     private int parseIntValue(ScriptArgs.Arg arg, boolean forHeight) {
@@ -225,6 +233,13 @@ public class Element {
     public Element position(int x, int y) {
         this.x = x;
         this.y = y;
+        return this;
+    }
+
+    public Element rotate(int x, int y, int z) {
+        this.rotateX = x;
+        this.rotateY = y;
+        this.rotateZ = z;
         return this;
     }
 
@@ -380,17 +395,12 @@ public class Element {
         if (visibility == Visibility.INVISIBLE)
             return;
 
-        boolean shouldClip = backgroundClip != BackgroundClip.NONE;
-        if (shouldClip) {
-            Dimensions shape;
-            switch (backgroundClip) {
-                case PADDING -> shape = getPaddedDimensions();
-                case BORDER -> shape = getBorderedDimensions();
-                case MARGIN -> shape = getMarginalDimensions();
-                default -> shape = getDimensions();
-            }
-            RenderSystem.enableScissor(shape.x, shape.y, shape.width, shape.height);
-        }
+        context.getMatrices().push();
+        int cx = x + width / 2;
+        int cy = y + height / 2;
+        context.getMatrices().multiply(RotationAxis.POSITIVE_X.rotationDegrees(rotateX), cx, cy, 0);
+        context.getMatrices().multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotateY), cx, cy, 0);
+        context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotateZ), cx, cy, 0);
 
         if (visibility != Visibility.ONLY_CHILDREN) {
             boolean notOpaque = opacity < 1.0F;
@@ -452,11 +462,27 @@ public class Element {
                 RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
-        if (visibility != Visibility.ONLY_SELF)
+        if (visibility != Visibility.ONLY_SELF) {
+            boolean shouldClip = backgroundClip != BackgroundClip.NONE;
+
+            if (shouldClip) {
+                Dimensions shape;
+                switch (backgroundClip) {
+                    case PADDING -> shape = getPaddedDimensions();
+                    case BORDER -> shape = getBorderedDimensions();
+                    case MARGIN -> shape = getMarginalDimensions();
+                    default -> shape = getDimensions();
+                }
+                context.enableScissor(shape.x, shape.y, shape.x + shape.width, shape.y + shape.height);
+            }
+
             onRenderChildren(context, delta);
 
-        if (shouldClip)
-            RenderSystem.disableScissor();
+            if (shouldClip)
+                context.disableScissor();
+        }
+
+        context.getMatrices().pop();
     }
 
     public void onRenderChildren(DrawContext context, float delta) {
@@ -579,7 +605,7 @@ public class Element {
 
     @Override
     public String toString() {
-        return "Element[%s]:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s],childrenAlignment:[%s,%s],backgroundImage:'%s',backgroundClip:%s,opacity:%s,draggable:%s,scrollable:%s},".formatted(
+        return "Element[%s]:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s],childrenAlignment:[%s,%s],backgroundImage:'%s',backgroundClip:%s,opacity:%s,draggable:%s,scrollable:%s,rotate:[%s,%s,%s]},".formatted(
                 order,
                 children.size(),
                 position,
@@ -597,7 +623,8 @@ public class Element {
                 backgroundClip,
                 opacity,
                 draggable,
-                scrollable
+                scrollable,
+                rotateX, rotateY, rotateZ
         );
     }
 }
