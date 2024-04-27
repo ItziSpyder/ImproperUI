@@ -244,11 +244,11 @@ public class Element {
     }
 
     public int getPosX() {
-        return (position == Position.INHERIT && parent != null) ? (parent.getPosX() + x) : x;
+        return (position == Position.INHERIT && parent != null) ? (parent.getPosX() + parent.marginLeft + x) : x;
     }
 
     public int getPosY() {
-        return (position == Position.INHERIT && parent != null) ? (parent.getPosY() + y) : y;
+        return (position == Position.INHERIT && parent != null) ? (parent.getPosY() + parent.marginTop + y) : y;
     }
 
     public Dimensions getRawDimensions() {
@@ -301,7 +301,9 @@ public class Element {
         this.x = x;
         this.y = y;
 
-        this.children.forEach(child -> {
+        this.children.stream().filter(child -> {
+            return child.position == Position.ABSOLUTE;
+        }).forEach(child -> {
             child.move(delX, delY);
         });
     }
