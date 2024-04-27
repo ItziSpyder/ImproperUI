@@ -36,8 +36,11 @@ public class Element {
     public BackgroundClip backgroundClip;
     public Identifier backgroundImage;
     public float opacity;
+    public boolean draggable;
+    public boolean scrollable;
 
-    private Element parent;
+    public Element parent;
+    public Panel parentPanel;
     private final List<Element> children;
     private final Map<String, Consumer<ScriptArgs>> properties;
 
@@ -70,6 +73,7 @@ public class Element {
         visibility = Visibility.VISIBLE;
         backgroundClip = BackgroundClip.NONE;
         opacity = 1.0F;
+        draggable = scrollable = false;
 
         this.init();
     }
@@ -139,6 +143,8 @@ public class Element {
         registerProperty("background-color", args -> fillColor = Color.parse(args.get(0).toString()));
         registerProperty("background-image", args -> backgroundImage = new Identifier(args.get(0).toString()));
         registerProperty("opacity", args -> opacity = args.get(0).toFloat());
+        registerProperty("draggable", args -> draggable = args.get(0).toBool());
+        registerProperty("scrollable", args -> scrollable = args.get(0).toBool());
     }
 
     public Element margin(int margin) {
@@ -408,26 +414,83 @@ public class Element {
 
     public void onRightClick() {
         tryInvoke(rightClickAction);
+
+        if (parentPanel == null)
+            return;
+
+        var c = RenderUtils.getCursor();
+        int cx = c.x;
+        int cy = c.y;
+
+        for (Element child : getChildrenOrdered()) {
+            if (child.getPaddedDimensions().contains(cx, cy)) {
+                parentPanel.selected = child;
+                parentPanel.focused = child;
+                parentPanel.hovered = child;
+                child.onRightClick();
+                break;
+            }
+        }
     }
 
     public void onLeftClick() {
         tryInvoke(leftClickAction);
+
+        if (parentPanel == null)
+            return;
+
+        var c = RenderUtils.getCursor();
+        int cx = c.x;
+        int cy = c.y;
+
+        for (Element child : getChildrenOrdered()) {
+            if (child.getPaddedDimensions().contains(cx, cy)) {
+                parentPanel.selected = child;
+                parentPanel.focused = child;
+                parentPanel.hovered = child;
+                child.onLeftClick();
+                break;
+            }
+        }
     }
 
     public void onMiddleClick() {
         tryInvoke(middleClickAction);
+
+        if (parentPanel == null)
+            return;
+
+        var c = RenderUtils.getCursor();
+        int cx = c.x;
+        int cy = c.y;
+
+        for (Element child : getChildrenOrdered()) {
+            if (child.getPaddedDimensions().contains(cx, cy)) {
+                parentPanel.selected = child;
+                parentPanel.focused = child;
+                parentPanel.hovered = child;
+                child.onMiddleClick();
+                break;
+            }
+        }
     }
 
     public void onScroll() {
+        if (scrollable) {
+            move(0, 15);
+        }
+
+        var c = RenderUtils.getCursor();
+        int cx = c.x;
+        int cy = c.y;
+
+        for (Element child : getChildren()) {
+            if (child.getPaddedDimensions().contains(cx, cy)) {
+                child.onScroll();
+            }
+        }
+
         tryInvoke(scrollAction);
-    }
-
-    public void onStartHover() {
-        tryInvoke(startHoverAction);
-    }
-
-    public void onStopHover() {
-        tryInvoke(stopHoverAction);
     }
 
     private void tryInvoke(String methodName) throws IllegalArgumentException {
@@ -460,7 +523,7 @@ public class Element {
 
     @Override
     public String toString() {
-        return "Element:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s],childrenAlignment:[%s,%s],backgroundImage:'%s',backgroundClip:%s,opacity:%s},".formatted(
+        return "Element:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s],childrenAlignment:[%s,%s],backgroundImage:'%s',backgroundClip:%s,opacity:%s,draggable:%s,scrollable:%s},".formatted(
                 children.size(),
                 position,
                 x, y, width, height,
@@ -475,7 +538,9 @@ public class Element {
                 childrenAlignment, gridColumns,
                 backgroundImage,
                 backgroundClip,
-                opacity
+                opacity,
+                draggable,
+                scrollable
         );
     }
 }

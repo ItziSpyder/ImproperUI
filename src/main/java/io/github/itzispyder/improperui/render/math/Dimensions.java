@@ -38,6 +38,10 @@ public class Dimensions {
         return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
     }
 
+    public boolean contains(double x, double y) {
+        return contains((int)x, (int)y);
+    }
+
     public int getX() {
         return x;
     }

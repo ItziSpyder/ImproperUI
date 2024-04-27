@@ -3,11 +3,15 @@ package io.github.itzispyder.improperui.util;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
+import net.minecraft.client.util.Window;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.joml.Matrix4f;
+import org.lwjgl.glfw.GLFW;
+
+import java.awt.*;
 
 import static com.mojang.blaze3d.systems.RenderSystem.*;
 
@@ -522,5 +526,27 @@ public final class RenderUtils {
 
     public static int height() {
         return mc.getWindow().getScaledHeight();
+    }
+
+    public static void setCursor(int x, int y) {
+        Window win = mc.getWindow();
+        int w1 = win.getWidth();
+        int w2 = win.getScaledWidth();
+        int h1 = win.getHeight();
+        int h2 = win.getScaledHeight();
+        double ratW = (double)w2 / (double)w1;
+        double ratH = (double)h2 / (double)h1;
+        GLFW.glfwSetCursorPos(win.getHandle(), x / ratW, y / ratH);
+    }
+
+    public static Point getCursor() {
+        Window win = mc.getWindow();
+        int w1 = win.getWidth();
+        int w2 = win.getScaledWidth();
+        int h1 = win.getHeight();
+        int h2 = win.getScaledHeight();
+        double rW = (double)w2 / (double)w1;
+        double rH = (double)h2 / (double)h1;
+        return new Point((int)(rW * mc.mouse.getX()), (int)(rH * mc.mouse.getY()));
     }
 }

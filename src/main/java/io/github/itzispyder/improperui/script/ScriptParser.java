@@ -1,6 +1,8 @@
 package io.github.itzispyder.improperui.script;
 
 import io.github.itzispyder.improperui.render.Element;
+import io.github.itzispyder.improperui.render.Panel;
+import net.minecraft.client.MinecraftClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -10,6 +12,17 @@ public class ScriptParser {
 
     public static void main(String[] args) {
         parseFile(new File("src/main/resources/skibidi.ui"));
+    }
+
+    public static void run(File file) {
+        var elements = parseFile(file);
+        var mc = MinecraftClient.getInstance();
+
+        Panel panel = new Panel();
+        elements.forEach(panel::addChild);
+        System.out.printf("Created new screen panel with %s children\n", panel.getChildren().size());
+
+        mc.execute(() -> mc.setScreen(panel));
     }
 
     public static List<Element> parseFile(File file) {

@@ -1,30 +1,10 @@
 
 element {
-    position = inherit
-    x = 42
-    y = 9
-    size = 6 0
-    margin = 24
-    inner-text = "what the fuck is this"
-
-    element {
-        inner-text = "yo chat is this valid or nah"
-        inner-text = "niggers = minecraft:gay"
-    }
-
-    element {
-        x = 9999; y = 9999; size = 9999 999;
-    }
-}
-
-element {
     position = absolute
     text-align = center
     x = 69
     y = 42
     size = 54 45
-
-    click-action = nameThisCallbackAnything
 
     element {
         border-radius = 69420
