@@ -10,10 +10,7 @@ import io.github.itzispyder.improperui.util.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class Element {
@@ -98,7 +95,18 @@ public class Element {
         registerProperty("right-click-action", args -> rightClickAction = args.get(0).toString());
         registerProperty("left-click-action", args -> leftClickAction = args.get(0).toString());
         registerProperty("middle-click-action", args -> middleClickAction = args.get(0).toString());
+        registerProperty("scroll-action", args -> scrollAction = args.get(0).toString());
         registerProperty("click-action", args -> {
+            String method = args.get(0).toString();
+            rightClickAction = method;
+            leftClickAction = method;
+            middleClickAction = method;
+        });
+        registerProperty("on-right-click", args -> rightClickAction = args.get(0).toString());
+        registerProperty("on-left-click", args -> leftClickAction = args.get(0).toString());
+        registerProperty("on-middle-click", args -> middleClickAction = args.get(0).toString());
+        registerProperty("on-scroll", args -> scrollAction = args.get(0).toString());
+        registerProperty("on-click", args -> {
             String method = args.get(0).toString();
             rightClickAction = method;
             leftClickAction = method;
@@ -159,11 +167,34 @@ public class Element {
     }
 
     public Dimensions getDimensions() {
-        int x = getPosX() - paddingLeft - marginLeft;
-        int y = getPosY() - paddingTop - marginTop;
-        int width = this.width + marginLeft + paddingLeft + paddingRight + marginRight;
-        int height = this.height + marginTop + paddingTop + paddingBottom + marginBottom;
-        return new Dimensions(x, y, width, height);
+        return new Dimensions(getPosX(), getPosY(), width, height);
+    }
+
+    public Dimensions getPaddedDimensions() {
+        Dimensions dim = getDimensions();
+        dim.x -= paddingLeft;
+        dim.y -= paddingTop;
+        dim.width += paddingLeft + paddingRight;
+        dim.height += paddingTop + paddingBottom;
+        return dim;
+    }
+
+    public Dimensions getBorderedDimensions() {
+        Dimensions dim = getPaddedDimensions();
+        dim.x -= borderThickness;
+        dim.y -= borderThickness;
+        dim.width += borderThickness * 2;
+        dim.height += borderThickness * 2;
+        return dim;
+    }
+
+    public Dimensions getMarginalDimensions() {
+        Dimensions dim = getBorderedDimensions();
+        dim.x -= marginLeft;
+        dim.y -= marginTop;
+        dim.width += marginLeft + marginRight;
+        dim.height += marginTop + marginBottom;
+        return dim;
     }
 
     public void addChild(Element child) {
@@ -184,6 +215,12 @@ public class Element {
         return new ArrayList<>(children);
     }
 
+    public List<Element> getChildrenOrdered() {
+        return new ArrayList<>(getChildren().stream()
+                .sorted(Comparator.comparing(e -> ((Element)e).order).reversed())
+                .toList());
+    }
+
     public void clearChildren() {
         var children = getChildren();
         children.forEach(this::removeChild);
@@ -199,9 +236,13 @@ public class Element {
      * @param entry property entry
      */
     public void callProperty(String entry) {
-        String[] split = entry.trim().split("\\s*:\\s*");
-        if (split.length == 2 && properties.containsKey(split[0]))
-            properties.get(split[0]).accept(new ScriptArgs(split[1].split("\\s+")));
+        entry = entry.trim();
+        String[] split = entry.trim().split("\\s*[:=]\\s*");
+        if (split.length < 2 || !properties.containsKey(split[0]))
+            return;
+
+        String value = entry.substring(split[0].length()).replaceFirst("\\s*[:=]\\s*", "");
+        properties.get(split[0]).accept(new ScriptArgs(value.split("\\s+")));
     }
 
     // built-in
