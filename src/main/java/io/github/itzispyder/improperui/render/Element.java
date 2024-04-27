@@ -6,7 +6,6 @@ import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.render.math.Dimensions;
 import io.github.itzispyder.improperui.script.CallbackHandler;
 import io.github.itzispyder.improperui.script.ScriptArgs;
-import io.github.itzispyder.improperui.util.MathUtils;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -293,16 +292,6 @@ public class Element {
         this.children.forEach(child -> {
             child.move(delX, delY);
         });
-    }
-
-    public void centerIn(int frameWidth, int frameHeight) {
-        moveTo(frameWidth / 2 - width / 2, frameHeight / 2 - height / 2);
-    }
-
-    public void boundIn(int frameWidth, int frameHeight) {
-        int x = MathUtils.clamp(this.x, 0, frameWidth - width);
-        int y = MathUtils.clamp(this.y, 0, frameHeight - height);
-        moveTo(x, y);
     }
 
     public void addChild(Element child) {
