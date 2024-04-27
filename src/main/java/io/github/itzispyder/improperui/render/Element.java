@@ -460,7 +460,7 @@ public class Element {
 
     @Override
     public String toString() {
-        return "Element:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s]}".formatted(
+        return "Element:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s],childrenAlignment:[%s,%s],backgroundImage:'%s',backgroundClip:%s,opacity:%s},".formatted(
                 children.size(),
                 position,
                 x, y, width, height,
@@ -471,7 +471,11 @@ public class Element {
                 shadowDistance, shadowColor,
                 rightClickAction, leftClickAction, middleClickAction, scrollAction,
                 startHoverAction, stopHoverAction,
-                textScale, textAlignment, innerText, textShadow
+                textScale, textAlignment, innerText, textShadow,
+                childrenAlignment, gridColumns,
+                backgroundImage,
+                backgroundClip,
+                opacity
         );
     }
 }
