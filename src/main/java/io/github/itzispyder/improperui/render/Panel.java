@@ -1,6 +1,5 @@
 package io.github.itzispyder.improperui.render;
 
-import io.github.itzispyder.improperui.util.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -34,7 +33,6 @@ public class Panel extends Screen {
             int dx = mouseX - cursor[0];
             int dy = mouseY - cursor[1];
             selected.move(dx, dy);
-            selected.boundIn(RenderUtils.width(), RenderUtils.height());
             cursor[0] = mouseX;
             cursor[1] = mouseY;
         }
@@ -114,13 +112,13 @@ public class Panel extends Screen {
         if (child == null || child.parentPanel != null || child.parent != null || children.contains(child))
             return;
         children.add(child);
-        child.parentPanel = this;
+        child.setParentPanel(this);
     }
 
     public void removeChild(Element child) {
         if (child == null)
             return;
-        child.parentPanel = null;
+        child.setParentPanel(null);
         children.remove(child);
     }
 

@@ -43,12 +43,14 @@ public class Element {
     public Panel parentPanel;
     private final List<Element> children;
     private final Map<String, Consumer<ScriptArgs>> properties;
+    private final List<String> queuedProperties;
 
     public Element() {
         this(0, 0, 0, 0);
     }
 
     public Element(int x, int y, int width, int height) {
+        queuedProperties = new ArrayList<>();
         children = new ArrayList<>();
         properties = new HashMap<>();
         position = Position.INHERIT;
@@ -87,6 +89,24 @@ public class Element {
         registerProperty("height", args -> height = parseIntValue(args.get(0), true));
         registerProperty("pos", args -> position(parseIntValue(args.get(0), false), parseIntValue(args.get(1), true)));
         registerProperty("size", args -> size(parseIntValue(args.get(0), false), parseIntValue(args.get(1), true)));
+        registerProperty("center", args -> {
+            switch (args.get(0).toEnum(Axis.class)) {
+                case HORIZONTAL -> {
+                    int len = parent == null ? RenderUtils.width() : parent.width;
+                    x = (len - this.width) / 2;
+                }
+                case VERTICAL -> {
+                    int len = parent == null ? RenderUtils.height() : parent.height;
+                    y = (len - this.height) / 2;
+                }
+                case BOTH -> {
+                    int lenWidth = parent == null ? RenderUtils.width() : parent.width;
+                    int lenHeight = parent == null ? RenderUtils.height() : parent.height;
+                    x = (lenWidth - this.width) / 2;
+                    y = (lenHeight - this.height) / 2;
+                }
+            }
+        });
 
         registerProperty("padding-left", args -> paddingLeft = parseIntValue(args.get(0), false));
         registerProperty("padding-right", args -> paddingRight = parseIntValue(args.get(0), false));
@@ -137,6 +157,8 @@ public class Element {
         registerProperty("text-align", args -> textAlignment = args.get(0).toEnum(Alignment.class));
 
         registerProperty("children-align", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
+        registerProperty("child-align", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
+        registerProperty("display", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
         registerProperty("grid-columns", args -> gridColumns = args.get(0).toInt());
         registerProperty("visibility", args -> visibility = args.get(0).toEnum(Visibility.class));
         registerProperty("background-clip", args -> backgroundClip = args.get(0).toEnum(BackgroundClip.class));
@@ -254,7 +276,9 @@ public class Element {
         this.x += deltaX;
         this.y += deltaY;
 
-        this.children.forEach(child -> {
+        this.children.stream().filter(child -> {
+            return child.position == Position.ABSOLUTE;
+        }).forEach(child -> {
             child.move(deltaX, deltaY);
         });
     }
@@ -286,25 +310,6 @@ public class Element {
             return;
         children.add(child);
         child.parent = this;
-
-        int column = 0;
-        int rowY = getPosY();
-        int columnX = getPosX();
-
-        if (childrenAlignment == ChildrenAlignment.GRID) {
-            for (Element e : children) {
-                e.position = Position.INHERIT;
-                e.moveTo(columnX, rowY);
-
-                Dimensions dim = getMarginalDimensions();
-                columnX += dim.width;
-
-                if (column++ >= gridColumns - 1) {
-                    column = 0;
-                    rowY += dim.height;
-                }
-            }
-        }
     }
 
     public void removeChild(Element child) {
@@ -348,22 +353,55 @@ public class Element {
         properties.get(split[0]).accept(new ScriptArgs(value.split("\\s+")));
     }
 
+    public void queueProperty(String entry) {
+        queuedProperties.add(entry);
+    }
+
+    public void style() {
+        queuedProperties.forEach(this::callProperty);
+        queuedProperties.clear();
+        children.forEach(Element::style);
+
+        int column, rowY, columnX;
+        column = rowY = columnX = 0;
+
+        if (childrenAlignment == ChildrenAlignment.GRID) {
+            for (Element e : children) {
+                e.position = Position.INHERIT;
+                e.moveTo(columnX, rowY);
+
+                Dimensions dim = e.getMarginalDimensions();
+                columnX += dim.width;
+
+                if (column++ >= gridColumns - 1) {
+                    column = 0;
+                    columnX = 0;
+                    rowY += dim.height;
+                }
+            }
+        }
+    }
+
     // built-in
 
     public void onRender(DrawContext context, float delta) {
         int x = getPosX();
         int y = getPosY();
 
-        /*
-        if ("#8000b7ff".equalsIgnoreCase(fillColor.toString())) {
-            String debug = String.format("parent:%s, parse:%s, x:%s", parent.width, parseIntValue(new ScriptArgs.Arg("100%"), false), x);
-            MinecraftClient.getInstance().player.sendMessage(Text.of(debug));
-        }
-
-         */
-
         if (visibility == Visibility.INVISIBLE)
             return;
+
+        boolean shouldClip = backgroundClip != BackgroundClip.NONE;
+        if (shouldClip) {
+            Dimensions shape;
+            switch (backgroundClip) {
+                case PADDING -> shape = getPaddedDimensions();
+                case BORDER -> shape = getBorderedDimensions();
+                case MARGIN -> shape = getMarginalDimensions();
+                default -> shape = getDimensions();
+            }
+            RenderSystem.enableScissor(shape.x, shape.y, shape.width, shape.height);
+        }
 
         if (visibility != Visibility.ONLY_CHILDREN) {
             boolean notOpaque = opacity < 1.0F;
@@ -425,23 +463,11 @@ public class Element {
                 RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
-        if (visibility != Visibility.ONLY_SELF) {
-            boolean shouldClip = backgroundClip != BackgroundClip.NONE;
-            if (shouldClip) {
-                Dimensions shape;
-                switch (backgroundClip) {
-                    case PADDING -> shape = getPaddedDimensions();
-                    case BORDER -> shape = getBorderedDimensions();
-                    case MARGIN -> shape = getMarginalDimensions();
-                    default -> shape = getDimensions();
-                }
-                RenderSystem.enableScissor(shape.x, shape.y, shape.width, shape.height);
-            }
+        if (visibility != Visibility.ONLY_SELF)
             onRenderChildren(context, delta);
-            if (shouldClip) {
-                RenderSystem.disableScissor();
-            }
-        }
+
+        if (shouldClip)
+            RenderSystem.disableScissor();
     }
 
     public void onRenderChildren(DrawContext context, float delta) {
@@ -553,13 +579,19 @@ public class Element {
         error("method \"%s.%s\" not found!", this.getClass().getSimpleName(), methodName);
     }
 
+    protected void setParentPanel(Panel parentPanel) {
+        this.parentPanel = parentPanel;
+        this.children.forEach(child -> child.setParentPanel(parentPanel));
+    }
+
     public void error(String message, Object... args) {
         throw new IllegalArgumentException(message.formatted(args));
     }
 
     @Override
     public String toString() {
-        return "Element:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s],childrenAlignment:[%s,%s],backgroundImage:'%s',backgroundClip:%s,opacity:%s,draggable:%s,scrollable:%s},".formatted(
+        return "Element[%s]:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s],childrenAlignment:[%s,%s],backgroundImage:'%s',backgroundClip:%s,opacity:%s,draggable:%s,scrollable:%s},".formatted(
+                order,
                 children.size(),
                 position,
                 x, y, width, height,

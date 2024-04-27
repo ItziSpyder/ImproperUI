@@ -2,6 +2,8 @@ package io.github.itzispyder.improperui.script;
 
 import io.github.itzispyder.improperui.render.Element;
 import io.github.itzispyder.improperui.render.Panel;
+import io.github.itzispyder.improperui.util.ChatUtils;
+import io.github.itzispyder.improperui.util.StringUtils;
 import net.minecraft.client.MinecraftClient;
 
 import java.io.File;
@@ -15,14 +17,18 @@ public class ScriptParser {
     }
 
     public static void run(File file) {
-        var elements = parseFile(file);
-        var mc = MinecraftClient.getInstance();
+        try {
+            var elements = parseFile(file);
+            var mc = MinecraftClient.getInstance();
 
-        Panel panel = new Panel();
-        elements.forEach(panel::addChild);
-        System.out.printf("Created new screen panel with %s children\n", panel.getChildren().size());
+            Panel panel = new Panel();
+            elements.forEach(panel::addChild);
 
-        mc.execute(() -> mc.setScreen(panel));
+            mc.execute(() -> mc.setScreen(panel));
+        }
+        catch (Exception ex) {
+            ChatUtils.sendMessage(StringUtils.color("&cError parsing script: " + ex.getMessage()));
+        }
     }
 
     public static List<Element> parseFile(File file) {
@@ -35,6 +41,7 @@ public class ScriptParser {
         for (String section : ScriptReader.getAllSections(script, '{', '}')) {
             result.add(parseInternal(section));
         }
+        result.forEach(Element::style);
 
         return result;
     }
@@ -43,13 +50,12 @@ public class ScriptParser {
         Element element = new Element();
 
         for (String line : ScriptReader.parse(excerpt)) {
-            element.callProperty(line);
+            element.queueProperty(line);
         }
         for (String section : ScriptReader.getAllSections(excerpt, '{', '}')) {
             element.addChild(parseInternal(section));
         }
 
-        System.out.println(element);
         return element;
     }
 }
