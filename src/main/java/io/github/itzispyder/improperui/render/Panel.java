@@ -1,6 +1,11 @@
 package io.github.itzispyder.improperui.render;
 
+import io.github.itzispyder.improperui.script.CallbackListener;
+import io.github.itzispyder.improperui.script.Event;
 import io.github.itzispyder.improperui.script.ScriptParser;
+import io.github.itzispyder.improperui.util.ChatUtils;
+import io.github.itzispyder.improperui.util.RenderUtils;
+import io.github.itzispyder.improperui.util.StringUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -17,12 +22,14 @@ public class Panel extends Screen {
     public Element selected, focused, hovered;
     public boolean shiftKeyPressed, altKeyPressed, ctrlKeyPressed;
     private final List<Element> children;
+    private final List<CallbackListener> callbackListeners;
     private final int[] cursor;
     private String scriptPath;
 
     public Panel() {
         super(Text.of("Custom Scripted Panel Screen"));
         children = new ArrayList<>();
+        callbackListeners = new ArrayList<>();
         cursor = new int[2];
     }
 
@@ -61,9 +68,9 @@ public class Panel extends Screen {
                 cursor[1] = (int)mouseY;
 
                 switch (button) {
-                    case 0 -> child.onLeftClick();
-                    case 1 -> child.onRightClick();
-                    case 2 -> child.onMiddleClick();
+                    case 0 -> child.onLeftClick(false);
+                    case 1 -> child.onRightClick(false);
+                    case 2 -> child.onMiddleClick(false);
                 }
                 break;
             }
@@ -75,6 +82,23 @@ public class Panel extends Screen {
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         super.mouseReleased(mouseX, mouseY, button);
         selected = null;
+
+        for (Element child : getChildrenOrdered()) {
+            if (child.getPaddedDimensions().contains(mouseX, mouseY)) {
+                selected = child;
+                focused = child;
+                hovered = child;
+                cursor[0] = (int)mouseX;
+                cursor[1] = (int)mouseY;
+
+                switch (button) {
+                    case 0 -> child.onLeftClick(true);
+                    case 1 -> child.onRightClick(true);
+                    case 2 -> child.onMiddleClick(true);
+                }
+                break;
+            }
+        }
         return true;
     }
 
@@ -104,6 +128,16 @@ public class Panel extends Screen {
             this.ctrlKeyPressed = true;
 
         super.keyPressed(keyCode, scanCode, modifiers);
+
+        var c = RenderUtils.getCursor();
+        int cx = c.x;
+        int cy = c.y;
+        for (Element child : getChildrenOrdered()) {
+            if (child.getPaddedDimensions().contains(cx, cy)) {
+                child.onKey(keyCode, scanCode, false);
+                break;
+            }
+        }
         return true;
     }
 
@@ -117,6 +151,16 @@ public class Panel extends Screen {
             this.ctrlKeyPressed = false;
 
         super.keyReleased(keyCode, scanCode, modifiers);
+
+        var c = RenderUtils.getCursor();
+        int cx = c.x;
+        int cy = c.y;
+        for (Element child : getChildrenOrdered()) {
+            if (child.getPaddedDimensions().contains(cx, cy)) {
+                child.onKey(keyCode, scanCode, true);
+                break;
+            }
+        }
         return true;
     }
 
@@ -160,5 +204,20 @@ public class Panel extends Screen {
             if (child.getPaddedDimensions().contains(mx, my))
                 return child;
         return null;
+    }
+
+    public void registerCallback(CallbackListener listener) {
+        if (listener != null)
+            callbackListeners.add(listener);
+    }
+
+    public void runCallbacks(String methodName, Event event) {
+        try {
+            var callbacks = new ArrayList<>(callbackListeners);
+            callbacks.forEach(callback -> callback.runCallbacks(methodName, event));
+        }
+        catch (Exception ex) {
+            ChatUtils.sendMessage(StringUtils.color("&c" + ex.getMessage()));
+        }
     }
 }

@@ -4,8 +4,9 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.itzispyder.improperui.render.constants.*;
 import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.render.math.Dimensions;
-import io.github.itzispyder.improperui.script.CallbackHandler;
 import io.github.itzispyder.improperui.script.ScriptArgs;
+import io.github.itzispyder.improperui.script.events.KeyEvent;
+import io.github.itzispyder.improperui.script.events.MouseEvent;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -25,7 +26,7 @@ public class Element {
     public int x, y, width, height;
     public Color borderColor, fillColor, shadowColor;
     public int borderThickness, borderRadius, shadowDistance;
-    public String rightClickAction, leftClickAction, middleClickAction, scrollAction, startHoverAction, stopHoverAction;
+    public String clickAction, scrollAction, keyAction;
     public Alignment textAlignment;
     public String innerText;
     public float textScale;
@@ -132,26 +133,12 @@ public class Element {
         registerProperty("shadow-distance", args -> shadowDistance = parseIntValue(args.get(0), false));
         registerProperty("shadow", args -> shadow(args.get(0).toInt(), Color.parse(args.get(0).toString())));
 
-        registerProperty("right-click-action", args -> rightClickAction = args.get(0).toString());
-        registerProperty("left-click-action", args -> leftClickAction = args.get(0).toString());
-        registerProperty("middle-click-action", args -> middleClickAction = args.get(0).toString());
         registerProperty("scroll-action", args -> scrollAction = args.get(0).toString());
-        registerProperty("click-action", args -> {
-            String method = args.get(0).toString();
-            rightClickAction = method;
-            leftClickAction = method;
-            middleClickAction = method;
-        });
-        registerProperty("on-right-click", args -> rightClickAction = args.get(0).toString());
-        registerProperty("on-left-click", args -> leftClickAction = args.get(0).toString());
-        registerProperty("on-middle-click", args -> middleClickAction = args.get(0).toString());
+        registerProperty("click-action", args -> clickAction = args.get(0).toString());
+        registerProperty("key-action", args -> keyAction = args.get(0).toString());
         registerProperty("on-scroll", args -> scrollAction = args.get(0).toString());
-        registerProperty("on-click", args -> {
-            String method = args.get(0).toString();
-            rightClickAction = method;
-            leftClickAction = method;
-            middleClickAction = method;
-        });
+        registerProperty("on-click", args -> clickAction = args.get(0).toString());
+        registerProperty("on-key", args -> keyAction = args.get(0).toString());
 
         registerProperty("inner-text", args -> innerText = args.getQuoteAndRemove());
         registerProperty("text-scale", args -> textScale = args.get(0).toFloat());
@@ -488,15 +475,14 @@ public class Element {
         getChildren().forEach(child -> child.onRender(context, delta));
     }
 
-    public void onRightClick() {
+    public void onLeftClick(boolean release) {
+        if (parentPanel == null)
+            return;
         if (visibility == Visibility.INVISIBLE)
             return;
         if (visibility != Visibility.ONLY_CHILDREN)
-            tryInvoke(rightClickAction);
+            parentPanel.runCallbacks(clickAction, new MouseEvent(0, 0, !release ? InputType.DOWN : InputType.RELEASE, this));
         if (visibility == Visibility.ONLY_SELF)
-            return;
-
-        if (parentPanel == null)
             return;
 
         var c = RenderUtils.getCursor();
@@ -505,24 +491,25 @@ public class Element {
 
         for (Element child : getChildrenOrdered()) {
             if (child.getPaddedDimensions().contains(cx, cy)) {
-                parentPanel.selected = child;
-                parentPanel.focused = child;
-                parentPanel.hovered = child;
-                child.onRightClick();
+                if (!release) {
+                    parentPanel.selected = child;
+                    parentPanel.focused = child;
+                    parentPanel.hovered = child;
+                }
+                child.onLeftClick(release);
                 break;
             }
         }
     }
 
-    public void onLeftClick() {
+    public void onRightClick(boolean release) {
+        if (parentPanel == null)
+            return;
         if (visibility == Visibility.INVISIBLE)
             return;
         if (visibility != Visibility.ONLY_CHILDREN)
-            tryInvoke(leftClickAction);
+            parentPanel.runCallbacks(clickAction, new MouseEvent(1, 0, !release ? InputType.DOWN : InputType.RELEASE, this));
         if (visibility == Visibility.ONLY_SELF)
-            return;
-
-        if (parentPanel == null)
             return;
 
         var c = RenderUtils.getCursor();
@@ -531,24 +518,25 @@ public class Element {
 
         for (Element child : getChildrenOrdered()) {
             if (child.getPaddedDimensions().contains(cx, cy)) {
-                parentPanel.selected = child;
-                parentPanel.focused = child;
-                parentPanel.hovered = child;
-                child.onLeftClick();
+                if (!release) {
+                    parentPanel.selected = child;
+                    parentPanel.focused = child;
+                    parentPanel.hovered = child;
+                }
+                child.onRightClick(release);
                 break;
             }
         }
     }
 
-    public void onMiddleClick() {
+    public void onMiddleClick(boolean release) {
+        if (parentPanel == null)
+            return;
         if (visibility == Visibility.INVISIBLE)
             return;
         if (visibility != Visibility.ONLY_CHILDREN)
-            tryInvoke(middleClickAction);
+            parentPanel.runCallbacks(clickAction, new MouseEvent(2, 0, !release ? InputType.DOWN : InputType.RELEASE, this));
         if (visibility == Visibility.ONLY_SELF)
-            return;
-
-        if (parentPanel == null)
             return;
 
         var c = RenderUtils.getCursor();
@@ -557,20 +545,24 @@ public class Element {
 
         for (Element child : getChildrenOrdered()) {
             if (child.getPaddedDimensions().contains(cx, cy)) {
-                parentPanel.selected = child;
-                parentPanel.focused = child;
-                parentPanel.hovered = child;
-                child.onMiddleClick();
+                if (!release) {
+                    parentPanel.selected = child;
+                    parentPanel.focused = child;
+                    parentPanel.hovered = child;
+                }
+                child.onMiddleClick(release);
                 break;
             }
         }
     }
 
     public void onScroll(boolean up) {
+        if (parentPanel == null)
+            return;
         if (visibility == Visibility.INVISIBLE)
             return;
         if (visibility != Visibility.ONLY_CHILDREN) {
-            tryInvoke(scrollAction);
+            int delta = 0;
             if (scrollable) {
                 for (int i = 0; i < 10; i++) {
                     var dim = getMarginalDimensions();
@@ -578,9 +570,12 @@ public class Element {
                         break;
                     if (!up && children.stream().noneMatch(child -> child.getMarginalDimensions().heightY > dim.heightY))
                         break;
-                    children.forEach(child -> child.move(0, up ? 1 : -1));
+                    int dy = up ? 1 : -1;
+                    delta += dy;
+                    children.forEach(child -> child.move(0, dy));
                 }
             }
+            parentPanel.runCallbacks(scrollAction, new MouseEvent(2, delta, InputType.SCROLL, this));
         }
         if (visibility == Visibility.ONLY_SELF)
             return;
@@ -596,28 +591,26 @@ public class Element {
         }
     }
 
-    private void tryInvoke(String methodName) throws IllegalArgumentException {
-        if (methodName == null || methodName.trim().isEmpty())
+    public void onKey(int key, int scan, boolean release) {
+        if (parentPanel == null)
+            return;
+        if (visibility == Visibility.INVISIBLE)
+            return;
+        if (visibility != Visibility.ONLY_CHILDREN)
+            parentPanel.runCallbacks(keyAction, new KeyEvent(key, scan, !release ? InputType.DOWN : InputType.RELEASE, this));
+        if (visibility == Visibility.ONLY_SELF)
             return;
 
-        var methods = this.getClass().getDeclaredMethods();
-        for (var method : methods) {
-            if (methodName.equals(method.getName())) {
-                try {
-                    if (method.getParameterCount() == 0 || method.getParameters()[0].getType() != Element.class)
-                        error("specified callback method must have one parameter: io.github.itzispyder.improperui.render.Element");
-                    if (method.getAnnotation(CallbackHandler.class) == null)
-                        error("specified callback method must have annotation: @io.github.itzispyder.improperui.script.CallbackHandler");
-                    method.setAccessible(true);
-                    method.invoke(null, this);
-                }
-                catch (Exception ex) {
-                    error("encountered error invoking method: %s", ex.getMessage());
-                }
-                return;
+        var c = RenderUtils.getCursor();
+        int cx = c.x;
+        int cy = c.y;
+
+        for (Element child : getChildrenOrdered()) {
+            if (child.getPaddedDimensions().contains(cx, cy)) {
+                child.onKey(key, scan, release);
+                break;
             }
         }
-        error("method \"%s.%s\" not found!", this.getClass().getSimpleName(), methodName);
     }
 
     protected void setParentPanel(Panel parentPanel) {
@@ -625,13 +618,9 @@ public class Element {
         this.children.forEach(child -> child.setParentPanel(parentPanel));
     }
 
-    public void error(String message, Object... args) {
-        throw new IllegalArgumentException(message.formatted(args));
-    }
-
     @Override
     public String toString() {
-        return "Element[%s]:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s','%s','%s'],hoverActions:['%s','%s'],text:[%s,%s,'%s',%s],childrenAlignment:[%s,%s],backgroundImage:'%s',backgroundClip:%s,opacity:%s,draggable:%s,scrollable:%s,rotate:[%s,%s,%s]},".formatted(
+        return "Element[%s]:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s'],keyActions:%s,text:[%s,%s,'%s',%s],childrenAlignment:[%s,%s],backgroundImage:'%s',backgroundClip:%s,opacity:%s,draggable:%s,scrollable:%s,rotate:[%s,%s,%s]},".formatted(
                 order,
                 children.size(),
                 position,
@@ -641,8 +630,8 @@ public class Element {
                 borderThickness, borderRadius, borderColor,
                 fillColor,
                 shadowDistance, shadowColor,
-                rightClickAction, leftClickAction, middleClickAction, scrollAction,
-                startHoverAction, stopHoverAction,
+                clickAction, scrollAction,
+                keyAction,
                 textScale, textAlignment, innerText, textShadow,
                 childrenAlignment, gridColumns,
                 backgroundImage,

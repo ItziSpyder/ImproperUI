@@ -2,6 +2,7 @@ package io.github.itzispyder.improperui.script;
 
 import io.github.itzispyder.improperui.render.Element;
 import io.github.itzispyder.improperui.render.Panel;
+import io.github.itzispyder.improperui.script.callbacks.BuiltInCallbacks;
 import io.github.itzispyder.improperui.util.ChatUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
 import net.minecraft.client.MinecraftClient;
@@ -22,6 +23,7 @@ public class ScriptParser {
             var mc = MinecraftClient.getInstance();
 
             Panel panel = new Panel();
+            panel.registerCallback(new BuiltInCallbacks());
             elements.forEach(panel::addChild);
 
             mc.execute(() -> mc.setScreen(panel));
