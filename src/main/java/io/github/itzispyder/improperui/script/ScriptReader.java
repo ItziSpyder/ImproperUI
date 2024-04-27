@@ -125,6 +125,9 @@ public class ScriptReader {
                 result.append(line);
 
                 if (!line.isEmpty()) {
+                    if (!line.endsWith("{") && !line.endsWith("}") && !line.endsWith(";")) {
+                        result.append(";");
+                    }
                     result.append(" ");
                 }
             }

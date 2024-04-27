@@ -1,10 +1,13 @@
 package io.github.itzispyder.improperui.render;
 
+import io.github.itzispyder.improperui.script.ScriptParser;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -15,11 +18,17 @@ public class Panel extends Screen {
     public boolean shiftKeyPressed, altKeyPressed, ctrlKeyPressed;
     private final List<Element> children;
     private final int[] cursor;
+    private String scriptPath;
 
     public Panel() {
         super(Text.of("Custom Scripted Panel Screen"));
         children = new ArrayList<>();
         cursor = new int[2];
+    }
+
+    public Panel(String scriptPath) {
+        this();
+        this.scriptPath = scriptPath;
     }
 
     @Override
@@ -106,6 +115,12 @@ public class Panel extends Screen {
 
         super.keyReleased(keyCode, scanCode, modifiers);
         return true;
+    }
+
+    @Override
+    public void resize(MinecraftClient client, int width, int height) {
+        if (scriptPath != null)
+            ScriptParser.run(new File(scriptPath));
     }
 
     public void addChild(Element child) {
