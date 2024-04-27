@@ -56,8 +56,7 @@ public final class RenderUtils {
     }
 
     public static void fillRoundRect(DrawContext context, int x, int y, int w, int h, int r, int color) {
-        w = Math.max(w, r * 2);
-        h = Math.max(h, r * 2);
+        r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
         BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
@@ -91,8 +90,7 @@ public final class RenderUtils {
     }
 
     public static void fillRoundShadow(DrawContext context, int x, int y, int w, int h, int r, int thickness, int innerColor, int outerColor) {
-        w = Math.max(w, r * 2);
-        h = Math.max(h, r * 2);
+        r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
         BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
@@ -129,8 +127,7 @@ public final class RenderUtils {
     }
 
     public static void fillRoundTabTop(DrawContext context, int x, int y, int w, int h, int r, int color) {
-        w = Math.max(w, r * 2);
-        h = Math.max(h, r);
+        r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
         BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
@@ -164,8 +161,7 @@ public final class RenderUtils {
     }
 
     public static void fillRoundTabBottom(DrawContext context, int x, int y, int w, int h, int r, int color) {
-        w = Math.max(w, r * 2);
-        h = Math.max(h, r);
+        r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
         BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
@@ -259,8 +255,7 @@ public final class RenderUtils {
     }
 
     public static void drawRoundRect(DrawContext context, int x, int y, int w, int h, int r, int color) {
-        w = Math.max(w, r * 2);
-        h = Math.max(h, r * 2);
+        r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
         BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
@@ -426,8 +421,7 @@ public final class RenderUtils {
     }
 
     public static void drawRoundTexture(DrawContext context, Identifier texture, int x, int y, int w, int h, int r) {
-        w = Math.max(w, r * 2);
-        h = Math.max(h, r * 2);
+        r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
         BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
