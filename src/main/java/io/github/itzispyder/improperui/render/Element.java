@@ -1,14 +1,16 @@
 package io.github.itzispyder.improperui.render;
 
-import io.github.itzispyder.improperui.render.constants.Alignment;
-import io.github.itzispyder.improperui.render.constants.Position;
+import com.mojang.blaze3d.systems.RenderSystem;
+import io.github.itzispyder.improperui.render.constants.*;
 import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.render.math.Dimensions;
 import io.github.itzispyder.improperui.script.CallbackHandler;
 import io.github.itzispyder.improperui.script.ScriptArgs;
+import io.github.itzispyder.improperui.util.MathUtils;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -28,6 +30,12 @@ public class Element {
     public String innerText;
     public float textScale;
     public boolean textShadow;
+    public ChildrenAlignment childrenAlignment;
+    public int gridColumns;
+    public Visibility visibility;
+    public BackgroundClip backgroundClip;
+    public Identifier backgroundImage;
+    public float opacity;
 
     private Element parent;
     private final List<Element> children;
@@ -56,6 +64,12 @@ public class Element {
         textScale = 1.0F;
         textAlignment = Alignment.LEFT;
         textShadow = false;
+
+        childrenAlignment = ChildrenAlignment.GRID;
+        gridColumns = 1;
+        visibility = Visibility.VISIBLE;
+        backgroundClip = BackgroundClip.NONE;
+        opacity = 1.0F;
 
         this.init();
     }
@@ -117,6 +131,14 @@ public class Element {
         registerProperty("text-scale", args -> textScale = args.get(0).toFloat());
         registerProperty("text-shadow", args -> textShadow = args.get(0).toBool());
         registerProperty("text-align", args -> textAlignment = args.get(0).toEnum(Alignment.class));
+
+        registerProperty("children-align", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
+        registerProperty("grid-columns", args -> gridColumns = args.get(0).toInt());
+        registerProperty("visibility", args -> visibility = args.get(0).toEnum(Visibility.class));
+        registerProperty("background-clip", args -> backgroundClip = args.get(0).toEnum(BackgroundClip.class));
+        registerProperty("background-color", args -> fillColor = Color.parse(args.get(0).toString()));
+        registerProperty("background-image", args -> backgroundImage = new Identifier(args.get(0).toString()));
+        registerProperty("opacity", args -> opacity = args.get(0).toFloat());
     }
 
     public Element margin(int margin) {
@@ -197,11 +219,61 @@ public class Element {
         return dim;
     }
 
+    public void move(int deltaX, int deltaY) {
+        this.x += deltaX;
+        this.y += deltaY;
+
+        this.children.forEach(child -> {
+            child.move(deltaX, deltaY);
+        });
+    }
+
+    public void moveTo(int x, int y) {
+        int delX = x - this.x;
+        int delY = y - this.y;
+
+        this.x = x;
+        this.y = y;
+
+        this.children.forEach(child -> {
+            child.move(delX, delY);
+        });
+    }
+
+    public void centerIn(int frameWidth, int frameHeight) {
+        moveTo(frameWidth / 2 - width / 2, frameHeight / 2 - height / 2);
+    }
+
+    public void boundIn(int frameWidth, int frameHeight) {
+        int x = MathUtils.clamp(this.x, 0, frameWidth - width);
+        int y = MathUtils.clamp(this.y, 0, frameHeight - height);
+        moveTo(x, y);
+    }
+
     public void addChild(Element child) {
         if (child == null || child == this || child.parent != null || children.contains(child))
             return;
         children.add(child);
         child.parent = this;
+
+        int column = 0;
+        int rowY = getPosY();
+        int columnX = getPosX();
+
+        if (childrenAlignment == ChildrenAlignment.GRID) {
+            for (Element e : children) {
+                e.position = Position.INHERIT;
+                e.moveTo(columnX, rowY);
+
+                Dimensions dim = getMarginalDimensions();
+                columnX += dim.width;
+
+                if (column++ >= gridColumns - 1) {
+                    column = 0;
+                    rowY += dim.height;
+                }
+            }
+        }
     }
 
     public void removeChild(Element child) {
@@ -251,43 +323,87 @@ public class Element {
         int x = getPosX();
         int y = getPosY();
 
-        RenderUtils.fillRoundShadow(context,
-                x - paddingLeft - borderThickness,
-                y - paddingTop - borderThickness,
-                width + paddingLeft + paddingRight + borderThickness * 2,
-                height + paddingTop + paddingBottom + borderThickness * 2,
-                borderRadius,
-                shadowDistance,
-                shadowColor.getHex(),
-                shadowColor.getHexCustomAlpha(0)
-        );
-        RenderUtils.fillRoundShadow(context,
-                x - paddingLeft,
-                y - paddingTop,
-                width + paddingLeft + paddingRight,
-                height + paddingTop + paddingBottom,
-                borderRadius,
-                borderThickness,
-                borderColor.getHex(),
-                borderColor.getHex()
-        );
-        RenderUtils.fillRoundRect(context,
-                x - paddingLeft,
-                y - paddingTop,
-                width + paddingLeft + paddingRight,
-                height + paddingTop + paddingBottom,
-                borderRadius,
-                shadowColor.getHex()
-        );
+        if (visibility == Visibility.INVISIBLE)
+            return;
 
-        if (innerText != null) {
-            Text text = Text.of(innerText);
-            switch (textAlignment) {
-                case LEFT -> RenderUtils.drawDefaultScaledText(context, text, x, y + height / 3, textScale, textShadow);
-                case CENTER -> RenderUtils.drawDefaultCenteredScaledText(context, text, x + width / 2, y + height / 3, textScale, textShadow);
-                case RIGHT -> RenderUtils.drawDefaultRightScaledText(context, text, x + width, y + height / 3, textScale, textShadow);
+        boolean notOpaque = opacity < 1.0F;
+        if (notOpaque)
+            RenderSystem.setShaderColor(1, 1, 1, opacity);
+
+        if (visibility != Visibility.ONLY_CHILDREN) {
+            RenderUtils.fillRoundShadow(context,
+                    x - paddingLeft - borderThickness,
+                    y - paddingTop - borderThickness,
+                    width + paddingLeft + paddingRight + borderThickness * 2,
+                    height + paddingTop + paddingBottom + borderThickness * 2,
+                    borderRadius,
+                    shadowDistance,
+                    shadowColor.getHex(),
+                    shadowColor.getHexCustomAlpha(0)
+            );
+            RenderUtils.fillRoundShadow(context,
+                    x - paddingLeft,
+                    y - paddingTop,
+                    width + paddingLeft + paddingRight,
+                    height + paddingTop + paddingBottom,
+                    borderRadius,
+                    borderThickness,
+                    borderColor.getHex(),
+                    borderColor.getHex()
+            );
+            RenderUtils.fillRoundRect(context,
+                    x - paddingLeft,
+                    y - paddingTop,
+                    width + paddingLeft + paddingRight,
+                    height + paddingTop + paddingBottom,
+                    borderRadius,
+                    shadowColor.getHex()
+            );
+            if (backgroundImage != null) {
+                RenderUtils.drawRoundTexture(context,
+                        backgroundImage,
+                        x - paddingLeft,
+                        y - paddingTop,
+                        width + paddingLeft + paddingRight,
+                        height + paddingTop + paddingBottom,
+                        borderRadius
+                );
+            }
+
+            if (innerText != null) {
+                Text text = Text.of(innerText);
+                switch (textAlignment) {
+                    case LEFT -> RenderUtils.drawDefaultScaledText(context, text, x, y + height / 3, textScale, textShadow);
+                    case CENTER -> RenderUtils.drawDefaultCenteredScaledText(context, text, x + width / 2, y + height / 3, textScale, textShadow);
+                    case RIGHT -> RenderUtils.drawDefaultRightScaledText(context, text, x + width, y + height / 3, textScale, textShadow);
+                }
             }
         }
+
+        if (visibility != Visibility.ONLY_SELF) {
+            boolean shouldClip = backgroundClip != BackgroundClip.NONE;
+            if (shouldClip) {
+                Dimensions shape;
+                switch (backgroundClip) {
+                    case PADDING -> shape = getPaddedDimensions();
+                    case BORDER -> shape = getBorderedDimensions();
+                    case MARGIN -> shape = getMarginalDimensions();
+                    default -> shape = getDimensions();
+                }
+                RenderSystem.enableScissor(shape.x, shape.y, shape.width, shape.height);
+            }
+            onRenderChildren(context, delta);
+            if (shouldClip) {
+                RenderSystem.disableScissor();
+            }
+        }
+
+        if (notOpaque)
+            RenderSystem.setShaderColor(1, 1, 1, 1);
+    }
+
+    public void onRenderChildren(DrawContext context, float delta) {
+        getChildren().forEach(child -> child.onRender(context, delta));
     }
 
     public void onRightClick() {

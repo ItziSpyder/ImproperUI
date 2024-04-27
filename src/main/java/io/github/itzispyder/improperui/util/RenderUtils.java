@@ -413,7 +413,6 @@ public final class RenderUtils {
         disableCull();
         setShader(GameRenderer::getPositionTexProgram);
         setShaderTexture(0, texture);
-        setShaderColor(1, 1, 1, 1);
 
         BufferRenderer.drawWithGlobalProgram(buf.end());
 
@@ -454,7 +453,6 @@ public final class RenderUtils {
         disableCull();
         setShader(GameRenderer::getPositionTexProgram);
         setShaderTexture(0, texture);
-        setShaderColor(1, 1, 1, 1);
 
         BufferRenderer.drawWithGlobalProgram(buf.end());
 
@@ -496,7 +494,6 @@ public final class RenderUtils {
         enableBlend();
         defaultBlendFunc();
         setShader(GameRenderer::getPositionColorProgram);
-        setShaderColor(1, 1, 1, 1);
     }
 
     public static void finishRendering() {
