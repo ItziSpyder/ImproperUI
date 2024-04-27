@@ -6,6 +6,6 @@ public record MouseEvent(int button, InputType action) {
 
     @FunctionalInterface
     public interface Listener {
-        void onKey(int key, int scan, InputType action);
+        void onKey(MouseEvent e);
     }
 }

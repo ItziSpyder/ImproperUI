@@ -2,13 +2,15 @@ package io.github.itzispyder.improperui.render.math;
 
 public class Dimensions {
 
-    public int x, y, width, height;
+    public final int x, y, width, height, widthX, heightY;
 
     public Dimensions(int x, int y, int width, int height) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+        this.widthX = x + width;
+        this.heightY = y + height;
     }
 
     public boolean isOverlapping(Dimensions dim) {
@@ -46,31 +48,31 @@ public class Dimensions {
         return x;
     }
 
-    public void setX(int x) {
-        this.x = x;
+    public Dimensions withX(int x) {
+        return new Dimensions(x, y, width, height);
     }
 
     public int getY() {
         return y;
     }
 
-    public void setY(int y) {
-        this.y = y;
+    public Dimensions withY(int y) {
+        return new Dimensions(x, y, width, height);
     }
 
     public int getWidth() {
         return width;
     }
 
-    public void setWidth(int width) {
-        this.width = width;
+    public Dimensions withWidth(int width) {
+        return new Dimensions(x, y, width, height);
     }
 
     public int getHeight() {
         return height;
     }
 
-    public void setHeight(int height) {
-        this.height = height;
+    public Dimensions withHeight(int height) {
+        return new Dimensions(x, y, width, height);
     }
 }

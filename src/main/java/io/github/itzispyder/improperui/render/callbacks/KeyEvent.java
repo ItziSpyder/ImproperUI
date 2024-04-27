@@ -6,6 +6,6 @@ public record KeyEvent(int key, int scan, InputType action) {
 
     @FunctionalInterface
     public interface Listener {
-        void onKey(int key, int scan, InputType action);
+        void onKey(KeyEvent e);
     }
 }

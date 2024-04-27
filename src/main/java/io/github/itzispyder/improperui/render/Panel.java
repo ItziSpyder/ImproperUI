@@ -82,9 +82,12 @@ public class Panel extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
 
+        if (verticalAmount == 0)
+            return false;
+
         for (Element child : getChildrenOrdered()) {
             if (child.getPaddedDimensions().contains(mouseX, mouseY)) {
-                child.onScroll();
+                child.onScroll(verticalAmount > 0);
                 break;
             }
         }

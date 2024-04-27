@@ -114,13 +114,13 @@ public class Element {
         registerProperty("padding-right", args -> paddingRight = parseIntValue(args.get(0), false));
         registerProperty("padding-top", args -> paddingTop = parseIntValue(args.get(0), true));
         registerProperty("padding-bottom", args -> paddingBottom = parseIntValue(args.get(0), true));
-        registerProperty("padding", args -> margin(parseIntValue(args.get(0), false)));
+        registerProperty("padding", args -> padding(parseIntValue(args.get(0), false)));
 
         registerProperty("margin-left", args -> marginLeft = parseIntValue(args.get(0), false));
         registerProperty("margin-right", args -> marginRight = parseIntValue(args.get(0), false));
         registerProperty("margin-top", args -> marginTop = parseIntValue(args.get(0), true));
         registerProperty("margin-bottom", args -> marginBottom = parseIntValue(args.get(0), true));
-        registerProperty("padding", args -> padding(parseIntValue(args.get(0), false)));
+        registerProperty("margin", args -> margin(parseIntValue(args.get(0), false)));
 
         registerProperty("border-thickness", args -> borderThickness = parseIntValue(args.get(0), false));
         registerProperty("border-radius", args -> borderRadius = parseIntValue(args.get(0), false));
@@ -261,29 +261,26 @@ public class Element {
 
     public Dimensions getPaddedDimensions() {
         Dimensions dim = getDimensions();
-        dim.x -= paddingLeft;
-        dim.y -= paddingTop;
-        dim.width += paddingLeft + paddingRight;
-        dim.height += paddingTop + paddingBottom;
-        return dim;
+        return dim.withX(dim.x - paddingLeft)
+                .withY(dim.y - paddingTop)
+                .withWidth(dim.width + paddingLeft + paddingRight)
+                .withHeight(dim.height + paddingTop + paddingBottom);
     }
 
     public Dimensions getBorderedDimensions() {
         Dimensions dim = getPaddedDimensions();
-        dim.x -= borderThickness;
-        dim.y -= borderThickness;
-        dim.width += borderThickness * 2;
-        dim.height += borderThickness * 2;
-        return dim;
+        return dim.withX(dim.x - borderThickness)
+                .withY(dim.y - borderThickness)
+                .withWidth(dim.width + borderThickness * 2)
+                .withHeight(dim.height + borderThickness * 2);
     }
 
     public Dimensions getMarginalDimensions() {
         Dimensions dim = getBorderedDimensions();
-        dim.x -= marginLeft;
-        dim.y -= marginTop;
-        dim.width += marginLeft + marginRight;
-        dim.height += marginTop + marginBottom;
-        return dim;
+        return dim.withX(dim.x - marginLeft)
+                .withY(dim.y - marginTop)
+                .withWidth(dim.width + marginLeft + marginRight)
+                .withHeight(dim.height + marginTop + marginBottom);
     }
 
     public void move(int deltaX, int deltaY) {
@@ -490,7 +487,12 @@ public class Element {
     }
 
     public void onRightClick() {
-        tryInvoke(rightClickAction);
+        if (visibility == Visibility.INVISIBLE)
+            return;
+        if (visibility != Visibility.ONLY_CHILDREN)
+            tryInvoke(rightClickAction);
+        if (visibility == Visibility.ONLY_SELF)
+            return;
 
         if (parentPanel == null)
             return;
@@ -511,7 +513,12 @@ public class Element {
     }
 
     public void onLeftClick() {
-        tryInvoke(leftClickAction);
+        if (visibility == Visibility.INVISIBLE)
+            return;
+        if (visibility != Visibility.ONLY_CHILDREN)
+            tryInvoke(leftClickAction);
+        if (visibility == Visibility.ONLY_SELF)
+            return;
 
         if (parentPanel == null)
             return;
@@ -532,7 +539,12 @@ public class Element {
     }
 
     public void onMiddleClick() {
-        tryInvoke(middleClickAction);
+        if (visibility == Visibility.INVISIBLE)
+            return;
+        if (visibility != Visibility.ONLY_CHILDREN)
+            tryInvoke(middleClickAction);
+        if (visibility == Visibility.ONLY_SELF)
+            return;
 
         if (parentPanel == null)
             return;
@@ -552,10 +564,24 @@ public class Element {
         }
     }
 
-    public void onScroll() {
-        if (scrollable) {
-            move(0, 15);
+    public void onScroll(boolean up) {
+        if (visibility == Visibility.INVISIBLE)
+            return;
+        if (visibility != Visibility.ONLY_CHILDREN) {
+            tryInvoke(scrollAction);
+            if (scrollable) {
+                for (int i = 0; i < 10; i++) {
+                    var dim = getMarginalDimensions();
+                    if (up && children.stream().noneMatch(child -> child.getMarginalDimensions().y < dim.y))
+                        break;
+                    if (!up && children.stream().noneMatch(child -> child.getMarginalDimensions().heightY > dim.heightY))
+                        break;
+                    children.forEach(child -> child.move(0, up ? 1 : -1));
+                }
+            }
         }
+        if (visibility == Visibility.ONLY_SELF)
+            return;
 
         var c = RenderUtils.getCursor();
         int cx = c.x;
@@ -563,11 +589,9 @@ public class Element {
 
         for (Element child : getChildren()) {
             if (child.getPaddedDimensions().contains(cx, cy)) {
-                child.onScroll();
+                child.onScroll(up);
             }
         }
-
-        tryInvoke(scrollAction);
     }
 
     private void tryInvoke(String methodName) throws IllegalArgumentException {
