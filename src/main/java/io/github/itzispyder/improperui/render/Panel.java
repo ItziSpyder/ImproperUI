@@ -60,7 +60,7 @@ public class Panel extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         for (Element child : getChildrenOrdered()) {
-            if (child.getPaddedDimensions().contains(mouseX, mouseY)) {
+            if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
                 selected = child;
                 focused = child;
                 hovered = child;
@@ -81,10 +81,9 @@ public class Panel extends Screen {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         super.mouseReleased(mouseX, mouseY, button);
-        selected = null;
 
         for (Element child : getChildrenOrdered()) {
-            if (child.getPaddedDimensions().contains(mouseX, mouseY)) {
+            if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
                 selected = child;
                 focused = child;
                 hovered = child;
@@ -99,6 +98,8 @@ public class Panel extends Screen {
                 break;
             }
         }
+
+        selected = null;
         return true;
     }
 
@@ -110,7 +111,7 @@ public class Panel extends Screen {
             return false;
 
         for (Element child : getChildrenOrdered()) {
-            if (child.getPaddedDimensions().contains(mouseX, mouseY)) {
+            if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
                 child.onScroll(verticalAmount > 0);
                 break;
             }
@@ -133,7 +134,7 @@ public class Panel extends Screen {
         int cx = c.x;
         int cy = c.y;
         for (Element child : getChildrenOrdered()) {
-            if (child.getPaddedDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(cx, cy)) {
                 child.onKey(keyCode, scanCode, false);
                 break;
             }
@@ -156,7 +157,7 @@ public class Panel extends Screen {
         int cx = c.x;
         int cy = c.y;
         for (Element child : getChildrenOrdered()) {
-            if (child.getPaddedDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(cx, cy)) {
                 child.onKey(keyCode, scanCode, true);
                 break;
             }
@@ -201,7 +202,7 @@ public class Panel extends Screen {
 
     public Element getHoveredElement(int mx, int my) {
         for (Element child : getChildrenOrdered())
-            if (child.getPaddedDimensions().contains(mx, my))
+            if (child.getHitboxDimensions().contains(mx, my))
                 return child;
         return null;
     }

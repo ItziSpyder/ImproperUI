@@ -8,6 +8,7 @@ import io.github.itzispyder.improperui.script.ScriptArgs;
 import io.github.itzispyder.improperui.script.events.KeyEvent;
 import io.github.itzispyder.improperui.script.events.MouseEvent;
 import io.github.itzispyder.improperui.util.RenderUtils;
+import io.github.itzispyder.improperui.util.StringUtils;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -19,7 +20,7 @@ import java.util.function.Consumer;
 public class Element {
 
     private static int sequence = 0;
-    public final int order = sequence++;
+    public int order = 0;
     public Position position;
     public int marginLeft, marginRight, marginTop, marginBottom;
     public int paddingLeft, paddingRight, paddingTop, paddingBottom;
@@ -140,7 +141,7 @@ public class Element {
         registerProperty("on-click", args -> clickAction = args.get(0).toString());
         registerProperty("on-key", args -> keyAction = args.get(0).toString());
 
-        registerProperty("inner-text", args -> innerText = args.getQuoteAndRemove());
+        registerProperty("inner-text", args -> innerText = StringUtils.color(args.getQuoteAndRemove()));
         registerProperty("text-scale", args -> textScale = args.get(0).toFloat());
         registerProperty("text-shadow", args -> textShadow = args.get(0).toBool());
         registerProperty("text-align", args -> textAlignment = args.get(0).toEnum(Alignment.class));
@@ -269,6 +270,15 @@ public class Element {
                 .withWidth(dim.width + marginLeft + marginRight)
                 .withHeight(dim.height + marginTop + marginBottom);
     }
+    
+    public Dimensions getHitboxDimensions() {
+        return new Dimensions(
+                getPosX() + marginLeft - paddingLeft,
+                getPosY() + marginTop - paddingTop,
+                width + paddingLeft + paddingRight,
+                height + paddingTop + paddingBottom
+        );
+    }
 
     public void move(int deltaX, int deltaY) {
         this.x += deltaX;
@@ -350,6 +360,7 @@ public class Element {
     public void style() {
         queuedProperties.forEach(this::callProperty);
         queuedProperties.clear();
+        order = sequence++;
         children.forEach(Element::style);
 
         int column, rowY, columnX;
@@ -490,7 +501,7 @@ public class Element {
         int cy = c.y;
 
         for (Element child : getChildrenOrdered()) {
-            if (child.getPaddedDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(cx, cy)) {
                 if (!release) {
                     parentPanel.selected = child;
                     parentPanel.focused = child;
@@ -517,7 +528,7 @@ public class Element {
         int cy = c.y;
 
         for (Element child : getChildrenOrdered()) {
-            if (child.getPaddedDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(cx, cy)) {
                 if (!release) {
                     parentPanel.selected = child;
                     parentPanel.focused = child;
@@ -544,7 +555,7 @@ public class Element {
         int cy = c.y;
 
         for (Element child : getChildrenOrdered()) {
-            if (child.getPaddedDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(cx, cy)) {
                 if (!release) {
                     parentPanel.selected = child;
                     parentPanel.focused = child;
@@ -585,7 +596,7 @@ public class Element {
         int cy = c.y;
 
         for (Element child : getChildren()) {
-            if (child.getPaddedDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(cx, cy)) {
                 child.onScroll(up);
             }
         }
@@ -606,7 +617,7 @@ public class Element {
         int cy = c.y;
 
         for (Element child : getChildrenOrdered()) {
-            if (child.getPaddedDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(cx, cy)) {
                 child.onKey(key, scan, release);
                 break;
             }
