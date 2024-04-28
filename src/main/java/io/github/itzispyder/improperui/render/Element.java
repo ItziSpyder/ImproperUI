@@ -1,5 +1,7 @@
 package io.github.itzispyder.improperui.render;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.itzispyder.improperui.render.constants.*;
 import io.github.itzispyder.improperui.render.math.Color;
@@ -16,11 +18,15 @@ import net.minecraft.util.math.RotationAxis;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Element {
 
     private static int sequence = 0;
     public int order = 0;
+    private String id, tag;
+    private final List<String> classList;
+
     public Position position;
     public int marginLeft, marginRight, marginTop, marginBottom;
     public int paddingLeft, paddingRight, paddingTop, paddingBottom;
@@ -56,6 +62,7 @@ public class Element {
         queuedProperties = new ArrayList<>();
         children = new ArrayList<>();
         properties = new HashMap<>();
+        classList = new ArrayList<>();
         position = Position.INHERIT;
 
         this.x = x;
@@ -339,6 +346,18 @@ public class Element {
             properties.put(key.toLowerCase(), callback);
     }
 
+    public List<String> getClassList() {
+        return new ArrayList<>(classList);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
     /**
      * This is formatted key:args
      * @param entry property entry
@@ -351,6 +370,23 @@ public class Element {
 
         String value = entry.substring(split[0].length()).replaceFirst("\\s*[:=]\\s*", "");
         properties.get(split[0]).accept(new ScriptArgs(value.split("\\s+")));
+    }
+
+    public void callAttribute(String entry) {
+        entry = entry.trim();
+        int len = entry.length();
+
+        if (entry.startsWith("#") && len > 1)
+            id = entry.substring(1);
+        else if (entry.startsWith("-") && len > 1)
+            classList.add(entry.substring(1));
+        else if (len > 0)
+            tag = entry;
+    }
+
+    public void printAll() {
+        System.out.println(this);
+        children.forEach(Element::printAll);
     }
 
     public void queueProperty(String entry) {
@@ -631,26 +667,90 @@ public class Element {
 
     @Override
     public String toString() {
-        return "Element[%s]:{children-count:%s,position:%s,dimensions:[%s,%s,%s,%s],margin:[%s,%s,%s,%s],padding:[%s,%s,%s,%s],border:[%s,%s,%s],fill:%s,shadow:[%s,%s],mouseActions:['%s','%s'],keyActions:%s,text:[%s,%s,'%s',%s],childrenAlignment:[%s,%s],backgroundImage:'%s',backgroundClip:%s,opacity:%s,draggable:%s,scrollable:%s,rotate:[%s,%s,%s]},".formatted(
-                order,
-                children.size(),
-                position,
-                x, y, width, height,
-                marginLeft, marginRight, marginTop, marginBottom,
-                paddingLeft, paddingRight, paddingTop, paddingBottom,
-                borderThickness, borderRadius, borderColor,
-                fillColor,
-                shadowDistance, shadowColor,
-                clickAction, scrollAction,
-                keyAction,
-                textScale, textAlignment, innerText, textShadow,
-                childrenAlignment, gridColumns,
-                backgroundImage,
-                backgroundClip,
-                opacity,
-                draggable,
-                scrollable,
-                rotateX, rotateY, rotateZ
-        );
+        JsonObject o = new JsonObject();
+        JsonArray arr;
+
+        o.addProperty("children-count", children.size());
+        o.addProperty("position", stringify(position));
+
+        arr = new JsonArray();
+        arr.add(x);
+        arr.add(y);
+        arr.add(width);
+        arr.add(height);
+        o.add("dimensions", arr);
+
+        arr = new JsonArray();
+        arr.add(marginLeft);
+        arr.add(marginRight);
+        arr.add(marginTop);
+        arr.add(marginBottom);
+        o.add("margin", arr);
+
+        arr = new JsonArray();
+        arr.add(paddingLeft);
+        arr.add(paddingRight);
+        arr.add(paddingTop);
+        arr.add(paddingBottom);
+        o.add("padding", arr);
+
+        arr = new JsonArray();
+        arr.add(borderThickness);
+        arr.add(borderRadius);
+        arr.add(stringify(borderColor));
+        o.add("border", arr);
+
+        arr = new JsonArray();
+        arr.add(stringify(fillColor));
+        arr.add(stringify(backgroundClip));
+        arr.add(stringify(backgroundImage));
+        arr.add(opacity);
+        o.add("background", arr);
+
+        arr = new JsonArray();
+        arr.add(shadowDistance);
+        arr.add(stringify(shadowColor));
+        o.add("shadow", arr);
+
+        arr = new JsonArray();
+        arr.add(clickAction);
+        arr.add(scrollAction);
+        arr.add(keyAction);
+        o.add("callbacks", arr);
+
+        arr = new JsonArray();
+        arr.add(textScale);
+        arr.add(stringify(textAlignment));
+        arr.add(innerText);
+        arr.add(textShadow);
+        o.add("text", arr);
+
+        arr = new JsonArray();
+        arr.add(stringify(childrenAlignment));
+        arr.add(gridColumns);
+        o.add("child-align", arr);
+
+        arr = new JsonArray();
+        arr.add(rotateX);
+        arr.add(rotateY);
+        arr.add(rotateZ);
+        o.add("rotation", arr);
+
+        o.addProperty("draggable", draggable);
+        o.addProperty("scrollable", scrollable);
+
+        return "%s#%s[%s]%s%s".formatted(tag, id, order, classList, o.toString());
+    }
+
+    private <T> String stringify(T val, Function<T, String> func) {
+        return val == null ? "null" : func.apply(val);
+    }
+
+    private <T extends Enum<?>> String stringify(T val) {
+        return stringify(val, Enum::name);
+    }
+
+    private String stringify(Object val) {
+        return stringify(val, Object::toString);
     }
 }

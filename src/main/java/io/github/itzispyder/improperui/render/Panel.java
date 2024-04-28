@@ -221,4 +221,8 @@ public class Panel extends Screen {
             ChatUtils.sendMessage(StringUtils.color("&c" + ex.getMessage()));
         }
     }
+
+    public void printAll() {
+        children.forEach(Element::printAll);
+    }
 }

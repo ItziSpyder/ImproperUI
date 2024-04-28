@@ -13,8 +13,11 @@ import java.util.List;
 
 public class ScriptParser {
 
+    private static final String ELEMENT = "[a-zA-Z]+(\\s+[#-][a-zA-Z0-9]+)*?\\s*\\{.*\\}";
+    private static final String SECTION = "\\s*\\{.*\\}\\s*$";
+
     public static void main(String[] args) {
-        parseFile(new File("src/main/resources/skibidi.ui"));
+        parseFile(new File("src/main/resources/assets/improperui/scripts/skibidi.ui"));
     }
 
     public static void run(File file) {
@@ -40,10 +43,11 @@ public class ScriptParser {
             return result;
 
         String script = ScriptReader.readFile(file.getPath());
-        for (String section : ScriptReader.getAllSections(script, '{', '}')) {
+        for (String section : ScriptReader.parse(script)) {
             result.add(parseInternal(section));
         }
         result.forEach(Element::style);
+        result.forEach(Element::printAll);
 
         return result;
     }
@@ -51,13 +55,27 @@ public class ScriptParser {
     private static Element parseInternal(String excerpt) {
         Element element = new Element();
 
-        for (String line : ScriptReader.parse(excerpt)) {
-            element.queueProperty(line);
+        if (excerpt.matches(ELEMENT)) {
+            callAttributes(element, excerpt);
+            excerpt = ScriptReader.firstSection(excerpt, '{', '}');
         }
-        for (String section : ScriptReader.getAllSections(excerpt, '{', '}')) {
-            element.addChild(parseInternal(section));
+
+        for (String line : ScriptReader.parse(excerpt)) {
+            if (!line.matches(ELEMENT)) {
+                element.queueProperty(line);
+                continue;
+            }
+            Element child = parseInternal(ScriptReader.firstSection(line, '{', '}'));
+            callAttributes(child, line);
+            element.addChild(child);
         }
 
         return element;
+    }
+
+    private static void callAttributes(Element element, String scriptLine) {
+        String[] attrs = scriptLine.replaceFirst(SECTION, "").split("\s+");
+        for (var attr : attrs)
+            element.callAttribute(attr);
     }
 }
