@@ -44,8 +44,7 @@ public class Element {
     public BackgroundClip backgroundClip;
     public Identifier backgroundImage;
     public float opacity;
-    public boolean draggable;
-    public boolean scrollable;
+    public boolean draggable, scrollable, clickThrough;
     public int rotateX, rotateY, rotateZ;
 
     public Element parent;
@@ -85,7 +84,7 @@ public class Element {
         visibility = Visibility.VISIBLE;
         backgroundClip = BackgroundClip.NONE;
         opacity = 1.0F;
-        draggable = scrollable = false;
+        draggable = scrollable = clickThrough = false;
         rotateX = rotateY = rotateZ = 0;
 
         this.init();
@@ -164,6 +163,7 @@ public class Element {
         registerProperty("opacity", args -> opacity = args.get(0).toFloat());
         registerProperty("draggable", args -> draggable = args.get(0).toBool());
         registerProperty("scrollable", args -> scrollable = args.get(0).toBool());
+        registerProperty("click-through", args -> clickThrough = args.get(0).toBool());
 
         registerProperty("rotate-x", args -> rotateX = args.get(0).toInt());
         registerProperty("rotate-y", args -> rotateY = args.get(0).toInt());
@@ -395,7 +395,6 @@ public class Element {
 
     public void style() {
         queuedProperties.forEach(this::callProperty);
-        queuedProperties.clear();
         order = sequence++;
         children.forEach(Element::style);
 
@@ -538,6 +537,8 @@ public class Element {
 
         for (Element child : getChildrenOrdered()) {
             if (child.getHitboxDimensions().contains(cx, cy)) {
+                if (child.clickThrough)
+                    continue;
                 if (!release) {
                     parentPanel.selected = child;
                     parentPanel.focused = child;
@@ -565,6 +566,8 @@ public class Element {
 
         for (Element child : getChildrenOrdered()) {
             if (child.getHitboxDimensions().contains(cx, cy)) {
+                if (child.clickThrough)
+                    continue;
                 if (!release) {
                     parentPanel.selected = child;
                     parentPanel.focused = child;
@@ -592,6 +595,8 @@ public class Element {
 
         for (Element child : getChildrenOrdered()) {
             if (child.getHitboxDimensions().contains(cx, cy)) {
+                if (child.clickThrough)
+                    continue;
                 if (!release) {
                     parentPanel.selected = child;
                     parentPanel.focused = child;
@@ -631,9 +636,12 @@ public class Element {
         int cx = c.x;
         int cy = c.y;
 
-        for (Element child : getChildren()) {
+        for (Element child : getChildrenOrdered()) {
             if (child.getHitboxDimensions().contains(cx, cy)) {
+                if (child.clickThrough)
+                    continue;
                 child.onScroll(up);
+                break;
             }
         }
     }
@@ -654,6 +662,8 @@ public class Element {
 
         for (Element child : getChildrenOrdered()) {
             if (child.getHitboxDimensions().contains(cx, cy)) {
+                if (child.clickThrough)
+                    continue;
                 child.onKey(key, scan, release);
                 break;
             }
@@ -738,6 +748,7 @@ public class Element {
 
         o.addProperty("draggable", draggable);
         o.addProperty("scrollable", scrollable);
+        o.addProperty("click-through", clickThrough);
 
         return "%s#%s[%s]%s%s".formatted(tag, id, order, classList, o.toString());
     }

@@ -61,6 +61,9 @@ public class Panel extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         for (Element child : getChildrenOrdered()) {
             if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
+                if (child.clickThrough)
+                    continue;
+
                 selected = child;
                 focused = child;
                 hovered = child;
@@ -84,6 +87,9 @@ public class Panel extends Screen {
 
         for (Element child : getChildrenOrdered()) {
             if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
+                if (child.clickThrough)
+                    continue;
+
                 selected = child;
                 focused = child;
                 hovered = child;
@@ -112,6 +118,8 @@ public class Panel extends Screen {
 
         for (Element child : getChildrenOrdered()) {
             if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
+                if (child.clickThrough)
+                    continue;
                 child.onScroll(verticalAmount > 0);
                 break;
             }
@@ -135,6 +143,8 @@ public class Panel extends Screen {
         int cy = c.y;
         for (Element child : getChildrenOrdered()) {
             if (child.getHitboxDimensions().contains(cx, cy)) {
+                if (child.clickThrough)
+                    continue;
                 child.onKey(keyCode, scanCode, false);
                 break;
             }
@@ -158,6 +168,8 @@ public class Panel extends Screen {
         int cy = c.y;
         for (Element child : getChildrenOrdered()) {
             if (child.getHitboxDimensions().contains(cx, cy)) {
+                if (child.clickThrough)
+                    continue;
                 child.onKey(keyCode, scanCode, true);
                 break;
             }
