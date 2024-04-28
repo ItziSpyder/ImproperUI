@@ -237,4 +237,16 @@ public class Panel extends Screen {
     public void printAll() {
         children.forEach(Element::printAll);
     }
+
+    public List<Element> collect() {
+        List<Element> list = new ArrayList<>();
+        for (Element child : children) {
+            list.addAll(child.collect());
+        }
+        return list;
+    }
+
+    public List<Element> collectOrdered() {
+        return new ArrayList<>(collect().stream().sorted(Element.ORDER).toList());
+    }
 }

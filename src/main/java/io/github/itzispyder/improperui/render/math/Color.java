@@ -5,6 +5,9 @@ import io.github.itzispyder.improperui.util.MathUtils;
 public class Color {
 
     public static final Color WHITE = new Color(0xFFFFFFFF);
+    public static final Color LIGHT_GRAY = new Color(0xFFC0C0C0);
+    public static final Color GRAY = new Color(0xFF808080);
+    public static final Color DARK_GRAY = new Color(0xFF404040);
     public static final Color BLACK = new Color(0xFF000000);
     public static final Color BROWN = new Color(0xFF805100);
     public static final Color RED = new Color(0xFFFF0000);
@@ -39,6 +42,9 @@ public class Color {
         }
         else switch (color) {
             case "white" -> result = WHITE;
+            case "light_gray", "light-gray" -> result = LIGHT_GRAY;
+            case "gray" -> result = GRAY;
+            case "dark_gray", "dark-gray" -> result = DARK_GRAY;
             case "brown" -> result = BROWN;
             case "red" -> result = RED;
             case "orange" -> result = ORANGE;

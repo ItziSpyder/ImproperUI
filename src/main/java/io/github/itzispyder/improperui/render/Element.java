@@ -22,10 +22,12 @@ import java.util.function.Function;
 
 public class Element {
 
+    public static final Comparator<Object> ORDER = Comparator.comparing(e -> ((Element)e).order).reversed();
+
     private static int sequence = 0;
     public int order = 0;
     private String id, tag;
-    private final List<String> classList;
+    public final Set<String> classList;
 
     public Position position;
     public int marginLeft, marginRight, marginTop, marginBottom;
@@ -61,7 +63,7 @@ public class Element {
         queuedProperties = new ArrayList<>();
         children = new ArrayList<>();
         properties = new HashMap<>();
-        classList = new ArrayList<>();
+        classList = new HashSet<>();
         position = Position.INHERIT;
 
         this.x = x;
@@ -133,7 +135,7 @@ public class Element {
         registerProperty("border-thickness", args -> borderThickness = parseIntValue(args.get(0), false));
         registerProperty("border-radius", args -> borderRadius = parseIntValue(args.get(0), false));
         registerProperty("border-color", args -> borderColor = Color.parse(args.get(0).toString()));
-        registerProperty("border", args -> border(parseIntValue(args.get(0), false), parseIntValue(args.get(0), false), Color.parse(args.get(0).toString())));
+        registerProperty("border", args -> border(parseIntValue(args.get(0), false), parseIntValue(args.get(1), false), Color.parse(args.get(2).toString())));
 
         registerProperty("fill-color", args -> fillColor = Color.parse(args.get(0).toString()));
         registerProperty("shadow-color", args -> shadowColor = Color.parse(args.get(0).toString()));
@@ -331,9 +333,7 @@ public class Element {
     }
 
     public List<Element> getChildrenOrdered() {
-        return new ArrayList<>(getChildren().stream()
-                .sorted(Comparator.comparing(e -> ((Element)e).order).reversed())
-                .toList());
+        return new ArrayList<>(getChildren().stream().sorted(ORDER).toList());
     }
 
     public void clearChildren() {
@@ -344,10 +344,6 @@ public class Element {
     public void registerProperty(String key, Consumer<ScriptArgs> callback) {
         if (key != null && !key.isEmpty() && callback != null)
             properties.put(key.toLowerCase(), callback);
-    }
-
-    public List<String> getClassList() {
-        return new ArrayList<>(classList);
     }
 
     public String getId() {
@@ -389,8 +385,15 @@ public class Element {
         children.forEach(Element::printAll);
     }
 
+    public void queueProperty(String entry, boolean highPriority) {
+        if (highPriority)
+            queuedProperties.add(0, entry);
+        else
+            queuedProperties.add(entry);
+    }
+
     public void queueProperty(String entry) {
-        queuedProperties.add(entry);
+        queueProperty(entry, false);
     }
 
     public void style() {
@@ -515,6 +518,11 @@ public class Element {
         }
 
         context.getMatrices().pop();
+
+        if (parentPanel != null && parentPanel.altKeyPressed) {
+            var hit = getHitboxDimensions();
+            RenderUtils.drawRect(context, hit.x, hit.y, hit.width, hit.height, Color.RED.getHex());
+        }
     }
 
     public void onRenderChildren(DrawContext context, float delta) {
@@ -763,5 +771,17 @@ public class Element {
 
     private String stringify(Object val) {
         return stringify(val, Object::toString);
+    }
+
+    public List<Element> collect() {
+        List<Element> list = new ArrayList<>();
+        for (Element child : children) {
+            list.addAll(child.collect());
+        }
+        return list;
+    }
+
+    public List<Element> collectOrdered() {
+        return new ArrayList<>(collect().stream().sorted(ORDER).toList());
     }
 }
