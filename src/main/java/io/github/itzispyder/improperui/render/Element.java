@@ -527,7 +527,7 @@ public class Element {
         if (visibility == Visibility.INVISIBLE)
             return;
         if (visibility != Visibility.ONLY_CHILDREN)
-            parentPanel.runCallbacks(clickAction, new MouseEvent(0, 0, !release ? InputType.DOWN : InputType.RELEASE, this));
+            parentPanel.runCallbacks(clickAction, new MouseEvent(0, 0, !release ? InputType.CLICK : InputType.RELEASE, this));
         if (visibility == Visibility.ONLY_SELF)
             return;
 
@@ -556,7 +556,7 @@ public class Element {
         if (visibility == Visibility.INVISIBLE)
             return;
         if (visibility != Visibility.ONLY_CHILDREN)
-            parentPanel.runCallbacks(clickAction, new MouseEvent(1, 0, !release ? InputType.DOWN : InputType.RELEASE, this));
+            parentPanel.runCallbacks(clickAction, new MouseEvent(1, 0, !release ? InputType.CLICK : InputType.RELEASE, this));
         if (visibility == Visibility.ONLY_SELF)
             return;
 
@@ -585,7 +585,7 @@ public class Element {
         if (visibility == Visibility.INVISIBLE)
             return;
         if (visibility != Visibility.ONLY_CHILDREN)
-            parentPanel.runCallbacks(clickAction, new MouseEvent(2, 0, !release ? InputType.DOWN : InputType.RELEASE, this));
+            parentPanel.runCallbacks(clickAction, new MouseEvent(2, 0, !release ? InputType.CLICK : InputType.RELEASE, this));
         if (visibility == Visibility.ONLY_SELF)
             return;
 
@@ -652,7 +652,7 @@ public class Element {
         if (visibility == Visibility.INVISIBLE)
             return;
         if (visibility != Visibility.ONLY_CHILDREN)
-            parentPanel.runCallbacks(keyAction, new KeyEvent(key, scan, !release ? InputType.DOWN : InputType.RELEASE, this));
+            parentPanel.runCallbacks(keyAction, new KeyEvent(key, scan, !release ? InputType.CLICK : InputType.RELEASE, this));
         if (visibility == Visibility.ONLY_SELF)
             return;
 

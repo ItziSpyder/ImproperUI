@@ -59,6 +59,33 @@ public final class RenderUtils {
         fillArc(context, cX, cY, radius, 0, 360, color);
     }
 
+    public static void fillAnnulusArc(DrawContext context, int cx, int cy, int radius, int start, int end, int thickness, int color) {
+        BufferBuilder buf = getBuffer();
+        Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
+
+        buf.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
+
+        for (int i = start - 90; i <= end - 90; i ++) {
+            float angle = (float)Math.toRadians(i);
+            float cos = (float)Math.cos(angle);
+            float sin = (float)Math.sin(angle);
+            float x1 = cx + cos * radius;
+            float y1 = cy + sin * radius;
+            float x2 = cx + cos * (radius + thickness);
+            float y2 = cy + sin * (radius + thickness);
+            buf.vertex(mat, x1, y1, 0).color(color).next();
+            buf.vertex(mat, x2, y2, 0).color(color).next();
+        }
+
+        beginRendering();
+        drawBuffer(buf);
+        finishRendering();
+    }
+
+    public static void fillAnnulus(DrawContext context, int cx, int cy, int radius, int thickness, int color) {
+        fillAnnulusArc(context, cx, cy, radius, 0, 360, thickness, color);
+    }
+
     public static void fillRoundRect(DrawContext context, int x, int y, int w, int h, int r, int color) {
         r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
