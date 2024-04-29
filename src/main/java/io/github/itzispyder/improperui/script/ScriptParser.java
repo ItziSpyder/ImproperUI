@@ -54,7 +54,7 @@ public class ScriptParser {
         return parse(script);
     }
 
-    private static List<Element> parse(String script) {
+    public static List<Element> parse(String script) {
         List<Element> result = new ArrayList<>();
 
         script = ScriptReader.condenseLines(script);
