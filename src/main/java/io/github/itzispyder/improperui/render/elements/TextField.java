@@ -48,7 +48,7 @@ public class TextField extends Element {
         queueProperty("inner-text: %s".formatted(innerText));
         queueProperty("size: %s %s".formatted(this.width, this.height));
         queueProperty("border: 1 0 white");
-        queueProperty("background-color: black");
+        queueProperty("background-color: dark_gray");
     }
 
     public TextField() {
@@ -158,12 +158,6 @@ public class TextField extends Element {
         }
 
         context.getMatrices().pop();
-
-        if (selectionBlinking && cursor == -1) {
-            int tx = x + CHAR_LEN;
-            int ty = y + CHAR_LEN - 2;
-            drawVerLine(context, tx, ty, CHAR_LEN + 2, 0xFFFFFFFF);
-        }
 
         if (mouseDown)
             pollMouseSelection(mx, my);
