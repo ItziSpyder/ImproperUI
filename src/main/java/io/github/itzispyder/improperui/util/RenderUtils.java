@@ -1,5 +1,6 @@
 package io.github.itzispyder.improperui.util;
 
+import io.github.itzispyder.improperui.client.ImproperUIClient;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
@@ -18,6 +19,7 @@ import static com.mojang.blaze3d.systems.RenderSystem.*;
 public final class RenderUtils {
 
     private static final MinecraftClient mc = MinecraftClient.getInstance();
+    private static final ImproperUIClient system = ImproperUIClient.getInstance();
 
     // fill
 
@@ -242,6 +244,13 @@ public final class RenderUtils {
         drawHorLine(context, x, y + h - 1, w, color);
     }
 
+    public static void drawBox(DrawContext context, int x, int y, int w, int h, int color) {
+        drawLine(context, x, y, x + w, y, color);
+        drawLine(context, x, y + h, x + w, y + h, color);
+        drawLine(context, x, y, x, y + h, color);
+        drawLine(context, x + w, y, x + w, y + h, color);
+    }
+
     public static void drawHorLine(DrawContext context, int x, int y, int length, int color) {
         fillRect(context, x, y, length, 1, color);
     }
@@ -380,6 +389,10 @@ public final class RenderUtils {
 
     public static void drawDefaultText(DrawContext context, Text text, int x, int y, boolean shadow, int color) {
         context.drawText(mc.textRenderer, text, x, y, color, shadow);
+    }
+
+    public static void drawDefaultCode(DrawContext context, String code, int x, int y, boolean shadow, int color) {
+        context.drawText(system.codeRenderer, code, x, y, color, shadow);
     }
 
     // non-default

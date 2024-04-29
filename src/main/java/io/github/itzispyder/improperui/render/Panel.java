@@ -1,5 +1,6 @@
 package io.github.itzispyder.improperui.render;
 
+import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.script.CallbackListener;
 import io.github.itzispyder.improperui.script.Event;
 import io.github.itzispyder.improperui.script.ScriptParser;
@@ -44,17 +45,38 @@ public class Panel extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(DrawContext context, int mx, int my, float delta) {
         if (selected != null && selected.draggable) {
-            int dx = mouseX - cursor[0];
-            int dy = mouseY - cursor[1];
+            int dx = mx - cursor[0];
+            int dy = my - cursor[1];
             selected.move(dx, dy);
-            cursor[0] = mouseX;
-            cursor[1] = mouseY;
+            cursor[0] = mx;
+            cursor[1] = my;
         }
 
-        hovered = getHoveredElement(mouseX, mouseY);
-        getChildren().forEach(child -> child.onRender(context, delta));
+        getChildren().forEach(child -> child.onRender(context, mx, my, delta));
+
+        var collection = collectOrdered();
+        boolean foundHover = false;
+        for (var child : collection) {
+            if (!foundHover && child.getHitboxDimensions().contains(mx, my)) {
+                hovered = child;
+                foundHover = true;
+            }
+            if (altKeyPressed) {
+                var hit = child.getHitboxDimensions();
+                RenderUtils.drawBox(context, hit.x, hit.y, hit.width, hit.height, Color.RED.getHex());
+
+                if (ctrlKeyPressed)
+                    RenderUtils.drawLine(context, RenderUtils.width() / 2, RenderUtils.height() / 2, hit.x, hit.y, Color.BLUE.getHex());
+                if (selected == child)
+                    RenderUtils.drawRect(context, hit.x, hit.y, hit.width, hit.height, Color.RED.getHex());
+                else if (focused == child)
+                    RenderUtils.drawRect(context, hit.x, hit.y, hit.width, hit.height, Color.BLUE.getHex());
+                else if (hovered == child)
+                    RenderUtils.drawRect(context, hit.x, hit.y, hit.width, hit.height, Color.ORANGE.getHex());
+            }
+        }
     }
 
     @Override
@@ -66,14 +88,13 @@ public class Panel extends Screen {
 
                 selected = child;
                 focused = child;
-                hovered = child;
                 cursor[0] = (int)mouseX;
                 cursor[1] = (int)mouseY;
 
                 switch (button) {
-                    case 0 -> child.onLeftClick(false);
-                    case 1 -> child.onRightClick(false);
-                    case 2 -> child.onMiddleClick(false);
+                    case 0 -> child.onLeftClick((int)mouseX, (int)mouseY, false);
+                    case 1 -> child.onRightClick((int)mouseX, (int)mouseY, false);
+                    case 2 -> child.onMiddleClick((int)mouseX, (int)mouseY, false);
                 }
                 break;
             }
@@ -89,17 +110,10 @@ public class Panel extends Screen {
             if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
                 if (child.clickThrough)
                     continue;
-
-                selected = child;
-                focused = child;
-                hovered = child;
-                cursor[0] = (int)mouseX;
-                cursor[1] = (int)mouseY;
-
                 switch (button) {
-                    case 0 -> child.onLeftClick(true);
-                    case 1 -> child.onRightClick(true);
-                    case 2 -> child.onMiddleClick(true);
+                    case 0 -> child.onLeftClick((int)mouseX, (int)mouseY, true);
+                    case 1 -> child.onRightClick((int)mouseX, (int)mouseY, true);
+                    case 2 -> child.onMiddleClick((int)mouseX, (int)mouseY, true);
                 }
                 break;
             }
@@ -120,7 +134,7 @@ public class Panel extends Screen {
             if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
                 if (child.clickThrough)
                     continue;
-                child.onScroll(verticalAmount > 0);
+                child.onScroll((int)mouseX, (int)mouseY, verticalAmount > 0);
                 break;
             }
         }
@@ -138,17 +152,8 @@ public class Panel extends Screen {
 
         super.keyPressed(keyCode, scanCode, modifiers);
 
-        var c = RenderUtils.getCursor();
-        int cx = c.x;
-        int cy = c.y;
-        for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(cx, cy)) {
-                if (child.clickThrough)
-                    continue;
-                child.onKey(keyCode, scanCode, false);
-                break;
-            }
-        }
+        if (focused != null)
+            focused.onKey(keyCode, scanCode, false);
         return true;
     }
 
@@ -183,6 +188,11 @@ public class Panel extends Screen {
             ScriptParser.run(new File(scriptPath));
     }
 
+    @Override
+    public void tick() {
+        children.forEach(Element::onTick);
+    }
+
     public void addChild(Element child) {
         if (child == null || child.parentPanel != null || child.parent != null || children.contains(child))
             return;
@@ -213,7 +223,7 @@ public class Panel extends Screen {
     }
 
     public Element getHoveredElement(int mx, int my) {
-        for (Element child : getChildrenOrdered())
+        for (Element child : collectOrdered())
             if (child.getHitboxDimensions().contains(mx, my))
                 return child;
         return null;
@@ -241,6 +251,7 @@ public class Panel extends Screen {
     public List<Element> collect() {
         List<Element> list = new ArrayList<>();
         for (Element child : children) {
+            list.add(child);
             list.addAll(child.collect());
         }
         return list;

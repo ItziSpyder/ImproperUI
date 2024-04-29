@@ -78,7 +78,11 @@ public class Color {
     }
 
     public Color(int a, int r, int g, int b) {
-        this((a << 24 | r << 16 | g << 8 | b), a, r, g, b);
+        this.a = MathUtils.clamp(a, 0, 255);
+        this.r = MathUtils.clamp(r, 0, 255);
+        this.g = MathUtils.clamp(g, 0, 255);
+        this.b = MathUtils.clamp(b, 0, 255);
+        this.hex = (this.a << 24 | this.r << 16 | this.g << 8 | this.b);
     }
 
     public Color(float a, float r, float g, float b) {

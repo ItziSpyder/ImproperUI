@@ -2,6 +2,7 @@ package io.github.itzispyder.improperui.client;
 
 import io.github.itzispyder.improperui.config.keybinds.Keybind;
 import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.client.font.TextRenderer;
 
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,7 @@ public class ImproperUIClient implements ClientModInitializer {
         return system;
     }
 
+    public TextRenderer codeRenderer;
     private final Set<Keybind> keybinds;
 
     public ImproperUIClient() {

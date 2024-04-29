@@ -11,6 +11,7 @@ import io.github.itzispyder.improperui.script.events.KeyEvent;
 import io.github.itzispyder.improperui.script.events.MouseEvent;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -23,6 +24,7 @@ import java.util.function.Function;
 public class Element {
 
     public static final Comparator<Object> ORDER = Comparator.comparing(e -> ((Element)e).order).reversed();
+    protected static final MinecraftClient mc = MinecraftClient.getInstance();
 
     private static int sequence = 0;
     public int order = 0;
@@ -33,7 +35,7 @@ public class Element {
     public int marginLeft, marginRight, marginTop, marginBottom;
     public int paddingLeft, paddingRight, paddingTop, paddingBottom;
     public int x, y, width, height;
-    public Color borderColor, fillColor, shadowColor;
+    public Color borderColor, fillColor, shadowColor, textColor;
     public int borderThickness, borderRadius, shadowDistance;
     public String clickAction, scrollAction, keyAction;
     public Alignment textAlignment;
@@ -75,6 +77,7 @@ public class Element {
         shadowColor = new Color(0x80000000);
         fillColor = new Color(0xFFFFFFFF);
         borderColor = new Color(0xFF202020);
+        textColor = new Color(0xFFD0D0D0);
         borderRadius = borderThickness = shadowDistance = 0;
 
         textScale = 1.0F;
@@ -153,6 +156,8 @@ public class Element {
         registerProperty("text-scale", args -> textScale = args.get(0).toFloat());
         registerProperty("text-shadow", args -> textShadow = args.get(0).toBool());
         registerProperty("text-align", args -> textAlignment = args.get(0).toEnum(Alignment.class));
+        registerProperty("text-color", args -> textColor = Color.parse(args.get(0).toString()));
+        registerProperty("color", args -> textColor = Color.parse(args.get(0).toString()));
 
         registerProperty("children-align", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
         registerProperty("child-align", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
@@ -423,7 +428,7 @@ public class Element {
 
     // built-in
 
-    public void onRender(DrawContext context, float delta) {
+    public void onRender(DrawContext context, int mx, int my, float delta) {
         int x = getPosX();
         int y = getPosY();
 
@@ -487,9 +492,9 @@ public class Element {
                 y += marginTop;
                 int textY = (int)(y + (height - (textScale * 10)) / 2);
                 switch (textAlignment) {
-                    case LEFT -> RenderUtils.drawDefaultScaledText(context, text, x, textY, textScale, textShadow);
-                    case CENTER -> RenderUtils.drawDefaultCenteredScaledText(context, text, x + width / 2, textY, textScale, textShadow);
-                    case RIGHT -> RenderUtils.drawDefaultRightScaledText(context, text, x + width, textY, textScale, textShadow);
+                    case LEFT -> RenderUtils.drawDefaultScaledText(context, text, x, textY, textScale, textShadow, textColor.getHex());
+                    case CENTER -> RenderUtils.drawDefaultCenteredScaledText(context, text, x + width / 2, textY, textScale, textShadow, textColor.getHex());
+                    case RIGHT -> RenderUtils.drawDefaultRightScaledText(context, text, x + width, textY, textScale, textShadow, textColor.getHex());
                 }
             }
 
@@ -511,25 +516,20 @@ public class Element {
                 context.enableScissor(shape.x, shape.y, shape.x + shape.width, shape.y + shape.height);
             }
 
-            onRenderChildren(context, delta);
+            onRenderChildren(context, mx, my, delta);
 
             if (shouldClip)
                 context.disableScissor();
         }
 
         context.getMatrices().pop();
-
-        if (parentPanel != null && parentPanel.altKeyPressed) {
-            var hit = getHitboxDimensions();
-            RenderUtils.drawRect(context, hit.x, hit.y, hit.width, hit.height, Color.RED.getHex());
-        }
     }
 
-    public void onRenderChildren(DrawContext context, float delta) {
-        getChildren().forEach(child -> child.onRender(context, delta));
+    public void onRenderChildren(DrawContext context, int mx, int my, float delta) {
+        getChildren().forEach(child -> child.onRender(context, mx, my, delta));
     }
 
-    public void onLeftClick(boolean release) {
+    public void onLeftClick(int mx, int my, boolean release) {
         if (parentPanel == null)
             return;
         if (visibility == Visibility.INVISIBLE)
@@ -539,26 +539,21 @@ public class Element {
         if (visibility == Visibility.ONLY_SELF)
             return;
 
-        var c = RenderUtils.getCursor();
-        int cx = c.x;
-        int cy = c.y;
-
         for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(mx, my)) {
                 if (child.clickThrough)
                     continue;
                 if (!release) {
                     parentPanel.selected = child;
                     parentPanel.focused = child;
-                    parentPanel.hovered = child;
                 }
-                child.onLeftClick(release);
+                child.onLeftClick(mx, my, release);
                 break;
             }
         }
     }
 
-    public void onRightClick(boolean release) {
+    public void onRightClick(int mx, int my, boolean release) {
         if (parentPanel == null)
             return;
         if (visibility == Visibility.INVISIBLE)
@@ -568,26 +563,21 @@ public class Element {
         if (visibility == Visibility.ONLY_SELF)
             return;
 
-        var c = RenderUtils.getCursor();
-        int cx = c.x;
-        int cy = c.y;
-
         for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(mx, my)) {
                 if (child.clickThrough)
                     continue;
                 if (!release) {
                     parentPanel.selected = child;
                     parentPanel.focused = child;
-                    parentPanel.hovered = child;
                 }
-                child.onRightClick(release);
+                child.onRightClick(mx, my, release);
                 break;
             }
         }
     }
 
-    public void onMiddleClick(boolean release) {
+    public void onMiddleClick(int mx, int my, boolean release) {
         if (parentPanel == null)
             return;
         if (visibility == Visibility.INVISIBLE)
@@ -597,26 +587,21 @@ public class Element {
         if (visibility == Visibility.ONLY_SELF)
             return;
 
-        var c = RenderUtils.getCursor();
-        int cx = c.x;
-        int cy = c.y;
-
         for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(mx, my)) {
                 if (child.clickThrough)
                     continue;
                 if (!release) {
                     parentPanel.selected = child;
                     parentPanel.focused = child;
-                    parentPanel.hovered = child;
                 }
-                child.onMiddleClick(release);
+                child.onMiddleClick(mx, my, release);
                 break;
             }
         }
     }
 
-    public void onScroll(boolean up) {
+    public void onScroll(int mx, int my, boolean up) {
         if (parentPanel == null)
             return;
         if (visibility == Visibility.INVISIBLE)
@@ -640,15 +625,11 @@ public class Element {
         if (visibility == Visibility.ONLY_SELF)
             return;
 
-        var c = RenderUtils.getCursor();
-        int cx = c.x;
-        int cy = c.y;
-
         for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(cx, cy)) {
+            if (child.getHitboxDimensions().contains(mx, my)) {
                 if (child.clickThrough)
                     continue;
-                child.onScroll(up);
+                child.onScroll(mx, my, up);
                 break;
             }
         }
@@ -676,6 +657,10 @@ public class Element {
                 break;
             }
         }
+    }
+
+    public void onTick() {
+        children.forEach(Element::onTick);
     }
 
     protected void setParentPanel(Panel parentPanel) {
@@ -741,6 +726,7 @@ public class Element {
         arr.add(stringify(textAlignment));
         arr.add(innerText);
         arr.add(textShadow);
+        arr.add(stringify(textColor));
         o.add("text", arr);
 
         arr = new JsonArray();
@@ -776,6 +762,7 @@ public class Element {
     public List<Element> collect() {
         List<Element> list = new ArrayList<>();
         for (Element child : children) {
+            list.add(child);
             list.addAll(child.collect());
         }
         return list;

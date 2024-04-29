@@ -19,8 +19,8 @@ public class CheckBox extends Element {
     }
 
     @Override
-    public void onLeftClick(boolean release) {
-        super.onLeftClick(release);
+    public void onLeftClick(int mx, int my, boolean release) {
+        super.onLeftClick(mx, my, release);
         if (!release)
             setActive(!isActive());
     }
