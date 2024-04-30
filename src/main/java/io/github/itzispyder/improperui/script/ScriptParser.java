@@ -2,6 +2,7 @@ package io.github.itzispyder.improperui.script;
 
 import io.github.itzispyder.improperui.render.Element;
 import io.github.itzispyder.improperui.render.Panel;
+import io.github.itzispyder.improperui.render.elements.Button;
 import io.github.itzispyder.improperui.render.elements.CheckBox;
 import io.github.itzispyder.improperui.render.elements.TextField;
 import io.github.itzispyder.improperui.script.callbacks.BuiltInCallbacks;
@@ -24,6 +25,8 @@ public class ScriptParser {
     private static final Map<String, Supplier<? extends Element>> tagSuppliers = new HashMap<>() {{
         this.put("checkbox", CheckBox::new);
         this.put("textfield", TextField::new);
+        this.put("div", Element::new);
+        this.put("button", Button::new);
     }};
 
     public static void main(String[] args) {

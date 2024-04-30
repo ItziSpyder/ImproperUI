@@ -490,7 +490,7 @@ public class Element {
                 Text text = Text.of(innerText);
                 x += marginLeft;
                 y += marginTop;
-                int textY = (int)(y + (height - (textScale * 10)) / 2);
+                int textY = (int)(y + (height - (textScale * 7)) / 2);
                 switch (textAlignment) {
                     case LEFT -> RenderUtils.drawDefaultScaledText(context, text, x, textY, textScale, textShadow, textColor.getHex());
                     case CENTER -> RenderUtils.drawDefaultCenteredScaledText(context, text, x + width / 2, textY, textScale, textShadow, textColor.getHex());
