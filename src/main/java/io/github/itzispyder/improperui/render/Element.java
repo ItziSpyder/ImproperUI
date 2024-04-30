@@ -10,7 +10,6 @@ import io.github.itzispyder.improperui.script.ScriptArgs;
 import io.github.itzispyder.improperui.script.ScriptReader;
 import io.github.itzispyder.improperui.script.events.KeyEvent;
 import io.github.itzispyder.improperui.script.events.MouseEvent;
-import io.github.itzispyder.improperui.util.ChatUtils;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
 import net.minecraft.client.MinecraftClient;
@@ -29,10 +28,10 @@ public class Element {
     protected static final MinecraftClient mc = MinecraftClient.getInstance();
 
     private static int sequence = 0;
-    public int order = 0;
     private String id, tag;
     public final Set<String> classList;
 
+    public int order = 0;
     public Position position;
     public int marginLeft, marginRight, marginTop, marginBottom;
     public int paddingLeft, paddingRight, paddingTop, paddingBottom;
@@ -187,6 +186,9 @@ public class Element {
         registerProperty("hovered", args -> hoverStyle = parsePropertiesThenSet(hoverStyle, args.getAll().toString()));
         registerProperty("selected", args -> selectStyle = parsePropertiesThenSet(selectStyle, args.getAll().toString()));
         registerProperty("focused", args -> focusStyle = parsePropertiesThenSet(focusStyle, args.getAll().toString()));
+
+        registerProperty("order", args -> order = args.get(0).toInt());
+        registerProperty("z-index", args -> order = args.get(0).toInt());
     }
 
     private int parseIntValue(ScriptArgs.Arg arg, boolean forHeight) {
@@ -384,12 +386,6 @@ public class Element {
 
         String value = entry.substring(split[0].length()).replaceFirst(regex, "");
         properties.get(split[0]).accept(new ScriptArgs(value.split("\\s+")));
-
-        if (classList.contains("debug")) {
-            String message = "Element[%s] called %s: %s".formatted(order, split[0], value);
-            System.out.println(message);
-            ChatUtils.sendMessage(message);
-        }
     }
 
     public void callAttribute(String entry) {
@@ -421,8 +417,8 @@ public class Element {
     }
 
     public void style() {
-        queuedProperties.forEach(this::callProperty);
         order = sequence++;
+        queuedProperties.forEach(this::callProperty);
         children.forEach(Element::style);
 
         int column, rowY, columnX;

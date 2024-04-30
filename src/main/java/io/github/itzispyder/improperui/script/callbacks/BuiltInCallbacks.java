@@ -20,4 +20,16 @@ public class BuiltInCallbacks implements CallbackListener {
         if (e.input.isDown())
             ChatUtils.sendFormatted("Hello World + %s", GLFW.glfwGetKeyName(e.key, e.scan));
     }
+
+    @CallbackHandler
+    public void printSelf(MouseEvent e) {
+        if (e.input.isDown())
+            ChatUtils.sendMessage("target: " + e.target);
+    }
+
+    @CallbackHandler
+    public void printSelf(KeyEvent e) {
+        if (e.input.isDown())
+            ChatUtils.sendMessage("target: " + e.target);
+    }
 }

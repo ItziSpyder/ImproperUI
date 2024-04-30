@@ -15,7 +15,6 @@ import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 public class Panel extends Screen {
@@ -195,7 +194,7 @@ public class Panel extends Screen {
 
     public List<Element> getChildrenOrdered() {
         return new ArrayList<>(getChildren().stream()
-                .sorted(Comparator.comparing(e -> ((Element)e).order).reversed())
+                .sorted(Element.ORDER)
                 .toList());
     }
 
