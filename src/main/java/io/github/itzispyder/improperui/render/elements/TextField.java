@@ -293,6 +293,13 @@ public class TextField extends Element {
     public void onLeftClick(int mx, int my, boolean release) {
         super.onLeftClick(mx, my, release);
         this.mouseDown = !release;
+
+        for (Element child : getChildren()) {
+            if (child.getHitboxDimensions().contains(mx, my)) {
+                child.onLeftClick(mx, my, release);
+                break;
+            }
+        }
     }
 
     private void pollMouseSelection(int mx, int my) {

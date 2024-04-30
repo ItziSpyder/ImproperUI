@@ -450,14 +450,17 @@ public class Element {
     public void onRender(DrawContext context, int mx, int my, float delta) {
         if (parentPanel != null) {
             if (parentPanel.selected == this && selectStyle != null) {
+                selectStyle.teleport(this);
                 selectStyle.onRender(context, mx, my, delta);
                 return;
             }
             if (parentPanel.hovered == this && hoverStyle != null) {
+                hoverStyle.teleport(this);
                 hoverStyle.onRender(context, mx, my, delta);
                 return;
             }
             if (parentPanel.focused == this && focusStyle != null) {
+                focusStyle.teleport(this);
                 focusStyle.onRender(context, mx, my, delta);
                 return;
             }
@@ -564,82 +567,62 @@ public class Element {
     }
 
     public void onLeftClick(int mx, int my, boolean release) {
-        if (parentPanel == null)
-            return;
-        if (visibility == Visibility.INVISIBLE)
-            return;
-        if (visibility != Visibility.ONLY_CHILDREN)
-            parentPanel.runCallbacks(clickAction, new MouseEvent(0, 0, !release ? InputType.CLICK : InputType.RELEASE, this));
-        if (visibility == Visibility.ONLY_SELF)
-            return;
 
-        for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(mx, my)) {
-                if (child.clickThrough)
-                    continue;
-                if (!release) {
-                    parentPanel.selected = child;
-                    parentPanel.focused = child;
-                }
-                child.onLeftClick(mx, my, release);
-                break;
-            }
-        }
     }
 
     public void onRightClick(int mx, int my, boolean release) {
-        if (parentPanel == null)
-            return;
-        if (visibility == Visibility.INVISIBLE)
-            return;
-        if (visibility != Visibility.ONLY_CHILDREN)
-            parentPanel.runCallbacks(clickAction, new MouseEvent(1, 0, !release ? InputType.CLICK : InputType.RELEASE, this));
-        if (visibility == Visibility.ONLY_SELF)
-            return;
 
-        for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(mx, my)) {
-                if (child.clickThrough)
-                    continue;
-                if (!release) {
-                    parentPanel.selected = child;
-                    parentPanel.focused = child;
-                }
-                child.onRightClick(mx, my, release);
-                break;
-            }
-        }
     }
 
     public void onMiddleClick(int mx, int my, boolean release) {
-        if (parentPanel == null)
-            return;
-        if (visibility == Visibility.INVISIBLE)
-            return;
-        if (visibility != Visibility.ONLY_CHILDREN)
-            parentPanel.runCallbacks(clickAction, new MouseEvent(2, 0, !release ? InputType.CLICK : InputType.RELEASE, this));
-        if (visibility == Visibility.ONLY_SELF)
-            return;
 
-        for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(mx, my)) {
-                if (child.clickThrough)
-                    continue;
-                if (!release) {
-                    parentPanel.selected = child;
-                    parentPanel.focused = child;
-                }
-                child.onMiddleClick(mx, my, release);
-                break;
-            }
-        }
     }
 
     public void onScroll(int mx, int my, boolean up) {
-        if (parentPanel == null)
-            return;
-        if (visibility == Visibility.INVISIBLE)
-            return;
+
+    }
+
+    public void onKey(int key, int scan, boolean release) {
+
+    }
+
+    public boolean pollClickable(int button, int mx, int my, boolean release) {
+        if (clickThrough || parentPanel == null || visibility == Visibility.INVISIBLE)
+            return false;
+        if (!getHitboxDimensions().contains(mx, my))
+            return false;
+        if (parent != null) {
+            if (parent.visibility == Visibility.ONLY_SELF)
+                return false;
+            if (parent.backgroundClip != BackgroundClip.NONE && !parent.getHitboxDimensions().contains(mx, my))
+                return false;
+        }
+
+        if (!release) {
+            parentPanel.selected = this;
+            parentPanel.focused = this;
+            parentPanel.cursor[0] = mx;
+            parentPanel.cursor[1] = my;
+        }
+        if (visibility != Visibility.ONLY_CHILDREN) {
+            InputType input = !release ? InputType.CLICK : InputType.RELEASE;
+            parentPanel.runCallbacks(clickAction, new MouseEvent(button, 0, input, this));
+        }
+        return true;
+    }
+
+    public boolean pollScrollable(int mx, int my, boolean up) {
+        if (clickThrough || parentPanel == null || visibility == Visibility.INVISIBLE)
+            return false;
+        if (!getHitboxDimensions().contains(mx, my))
+            return false;
+        if (parent != null) {
+            if (parent.visibility == Visibility.ONLY_SELF)
+                return false;
+            if (parent.backgroundClip != BackgroundClip.NONE && !parent.getHitboxDimensions().contains(mx, my))
+                return false;
+        }
+
         if (visibility != Visibility.ONLY_CHILDREN) {
             int delta = 0;
             if (scrollable) {
@@ -656,41 +639,20 @@ public class Element {
             }
             parentPanel.runCallbacks(scrollAction, new MouseEvent(2, delta, InputType.SCROLL, this));
         }
-        if (visibility == Visibility.ONLY_SELF)
-            return;
-
-        for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(mx, my)) {
-                if (child.clickThrough)
-                    continue;
-                child.onScroll(mx, my, up);
-                break;
-            }
-        }
+        return true;
     }
 
-    public void onKey(int key, int scan, boolean release) {
-        if (parentPanel == null)
-            return;
-        if (visibility == Visibility.INVISIBLE)
-            return;
-        if (visibility != Visibility.ONLY_CHILDREN)
-            parentPanel.runCallbacks(keyAction, new KeyEvent(key, scan, !release ? InputType.CLICK : InputType.RELEASE, this));
-        if (visibility == Visibility.ONLY_SELF)
-            return;
+    public boolean pollTypeable(int key, int scan, boolean release) {
+        if (clickThrough || parentPanel == null || visibility == Visibility.INVISIBLE)
+            return false;
+        if (parent != null && parent.visibility == Visibility.ONLY_SELF)
+            return false;
 
-        var c = RenderUtils.getCursor();
-        int cx = c.x;
-        int cy = c.y;
-
-        for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(cx, cy)) {
-                if (child.clickThrough)
-                    continue;
-                child.onKey(key, scan, release);
-                break;
-            }
+        if (visibility != Visibility.ONLY_CHILDREN) {
+            InputType input = !release ? InputType.CLICK : InputType.RELEASE;
+            parentPanel.runCallbacks(keyAction, new KeyEvent(key, scan, input, this));
         }
+        return true;
     }
 
     public void onTick() {
@@ -791,6 +753,10 @@ public class Element {
 
     private String stringify(Object val) {
         return stringify(val, Object::toString);
+    }
+
+    public void teleport(Element element) {
+        moveTo(element.x, element.y);
     }
 
     public List<Element> collect() {

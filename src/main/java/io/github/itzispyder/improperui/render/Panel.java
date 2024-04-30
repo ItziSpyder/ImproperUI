@@ -22,9 +22,9 @@ public class Panel extends Screen {
 
     public Element selected, focused, hovered;
     public boolean shiftKeyPressed, altKeyPressed, ctrlKeyPressed;
+    public final int[] cursor;
     private final List<Element> children;
     private final List<CallbackListener> callbackListeners;
-    private final int[] cursor;
     private String scriptPath;
 
     public Panel() {
@@ -56,12 +56,11 @@ public class Panel extends Screen {
 
         getChildren().forEach(child -> child.onRender(context, mx, my, delta));
 
-        var collection = collectOrdered();
-        boolean foundHover = false;
-        for (var child : collection) {
-            if (!foundHover && child.getHitboxDimensions().contains(mx, my)) {
+        boolean foundTarget = false;
+        for (var child : collectOrdered()) {
+            if (!foundTarget && child.getHitboxDimensions().contains(mx, my)) {
                 hovered = child;
-                foundHover = true;
+                foundTarget = true;
             }
             if (altKeyPressed) {
                 var hit = child.getHitboxDimensions();
@@ -81,20 +80,15 @@ public class Panel extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
-                if (child.clickThrough)
-                    continue;
+        int mx = (int) mouseX;
+        int my = (int) mouseY;
 
-                selected = child;
-                focused = child;
-                cursor[0] = (int)mouseX;
-                cursor[1] = (int)mouseY;
-
+        for (var child : collectOrdered()) {
+            if (child.pollClickable(button, mx, my, false)) {
                 switch (button) {
-                    case 0 -> child.onLeftClick((int)mouseX, (int)mouseY, false);
-                    case 1 -> child.onRightClick((int)mouseX, (int)mouseY, false);
-                    case 2 -> child.onMiddleClick((int)mouseX, (int)mouseY, false);
+                    case 0 -> child.onLeftClick(mx, my, false);
+                    case 1 -> child.onRightClick(mx, my, false);
+                    case 2 -> child.onMiddleClick(mx, my, false);
                 }
                 break;
             }
@@ -104,37 +98,34 @@ public class Panel extends Screen {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        super.mouseReleased(mouseX, mouseY, button);
+        int mx = (int) mouseX;
+        int my = (int) mouseY;
 
-        for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
-                if (child.clickThrough)
-                    continue;
+        for (var child : collectOrdered()) {
+            if (child.pollClickable(button, mx, my, true)) {
                 switch (button) {
-                    case 0 -> child.onLeftClick((int)mouseX, (int)mouseY, true);
-                    case 1 -> child.onRightClick((int)mouseX, (int)mouseY, true);
-                    case 2 -> child.onMiddleClick((int)mouseX, (int)mouseY, true);
+                    case 0 -> child.onLeftClick(mx, my, true);
+                    case 1 -> child.onRightClick(mx, my, true);
+                    case 2 -> child.onMiddleClick(mx, my, true);
                 }
                 break;
             }
         }
-
         selected = null;
         return true;
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
-
         if (verticalAmount == 0)
             return false;
 
-        for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(mouseX, mouseY)) {
-                if (child.clickThrough)
-                    continue;
-                child.onScroll((int)mouseX, (int)mouseY, verticalAmount > 0);
+        int mx = (int) mouseX;
+        int my = (int) mouseY;
+
+        for (var child : collectOrdered()) {
+            if (child.pollScrollable(mx, my, verticalAmount > 0)) {
+                child.onScroll(mx, my, true);
                 break;
             }
         }
@@ -152,7 +143,7 @@ public class Panel extends Screen {
 
         super.keyPressed(keyCode, scanCode, modifiers);
 
-        if (focused != null)
+        if (focused != null && focused.pollTypeable(keyCode, scanCode, false))
             focused.onKey(keyCode, scanCode, false);
         return true;
     }
@@ -168,17 +159,8 @@ public class Panel extends Screen {
 
         super.keyReleased(keyCode, scanCode, modifiers);
 
-        var c = RenderUtils.getCursor();
-        int cx = c.x;
-        int cy = c.y;
-        for (Element child : getChildrenOrdered()) {
-            if (child.getHitboxDimensions().contains(cx, cy)) {
-                if (child.clickThrough)
-                    continue;
-                child.onKey(keyCode, scanCode, true);
-                break;
-            }
-        }
+        if (focused != null && focused.pollTypeable(keyCode, scanCode, false))
+            focused.onKey(keyCode, scanCode, true);
         return true;
     }
 
