@@ -12,5 +12,7 @@ public class Button extends Element {
         queueProperty("padding: 2");
         queueProperty("margin: 2");
         queueProperty("text-align: center");
+        queueProperty("hovered => { border-thickness: 1; border-color: white; }");
+        queueProperty("selected => { border-thickness: 0; background-color: gray; }");
     }
 }

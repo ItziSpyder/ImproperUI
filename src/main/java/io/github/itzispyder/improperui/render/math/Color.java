@@ -176,11 +176,11 @@ public class Color {
     }
 
     public Color brighter() {
-        return new Color(a, r + 10, g + 10, b + 10);
+        return new Color(a, r + 20, g + 20, b + 20);
     }
 
     public Color darker() {
-        return new Color(a, r - 10, g - 10, b - 10);
+        return new Color(a, r - 20, g - 20, b - 20);
     }
 
     public java.awt.Color toAwtColor() {

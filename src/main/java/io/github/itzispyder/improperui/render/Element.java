@@ -7,8 +7,10 @@ import io.github.itzispyder.improperui.render.constants.*;
 import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.render.math.Dimensions;
 import io.github.itzispyder.improperui.script.ScriptArgs;
+import io.github.itzispyder.improperui.script.ScriptReader;
 import io.github.itzispyder.improperui.script.events.KeyEvent;
 import io.github.itzispyder.improperui.script.events.MouseEvent;
+import io.github.itzispyder.improperui.util.ChatUtils;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
 import net.minecraft.client.MinecraftClient;
@@ -50,6 +52,8 @@ public class Element {
     public float opacity;
     public boolean draggable, scrollable, clickThrough;
     public int rotateX, rotateY, rotateZ;
+    private Element hoverStyle, focusStyle, selectStyle;
+
 
     public Element parent;
     public Panel parentPanel;
@@ -176,6 +180,13 @@ public class Element {
         registerProperty("rotate-y", args -> rotateY = args.get(0).toInt());
         registerProperty("rotate-z", args -> rotateZ = args.get(0).toInt());
         registerProperty("rotate", args -> rotate(args.get(0).toInt(), args.get(1).toInt(), args.get(2).toInt()));
+
+        registerProperty("hover", args -> hoverStyle = parsePropertiesThenSet(hoverStyle, args.getAll().toString()));
+        registerProperty("select", args -> selectStyle = parsePropertiesThenSet(selectStyle, args.getAll().toString()));
+        registerProperty("focus", args -> focusStyle = parsePropertiesThenSet(focusStyle, args.getAll().toString()));
+        registerProperty("hovered", args -> hoverStyle = parsePropertiesThenSet(hoverStyle, args.getAll().toString()));
+        registerProperty("selected", args -> selectStyle = parsePropertiesThenSet(selectStyle, args.getAll().toString()));
+        registerProperty("focused", args -> focusStyle = parsePropertiesThenSet(focusStyle, args.getAll().toString()));
     }
 
     private int parseIntValue(ScriptArgs.Arg arg, boolean forHeight) {
@@ -364,13 +375,21 @@ public class Element {
      * @param entry property entry
      */
     public void callProperty(String entry) {
+        String regex = "\\s*((=>)|(->)|:|=)\\s*";
         entry = entry.trim();
-        String[] split = entry.trim().split("\\s*[:=]\\s*");
+        String[] split = entry.trim().split(regex);
+
         if (split.length < 2 || !properties.containsKey(split[0]))
             return;
 
-        String value = entry.substring(split[0].length()).replaceFirst("\\s*[:=]\\s*", "");
+        String value = entry.substring(split[0].length()).replaceFirst(regex, "");
         properties.get(split[0]).accept(new ScriptArgs(value.split("\\s+")));
+
+        if (classList.contains("debug")) {
+            String message = "Element[%s] called %s: %s".formatted(order, split[0], value);
+            System.out.println(message);
+            ChatUtils.sendMessage(message);
+        }
     }
 
     public void callAttribute(String entry) {
@@ -429,6 +448,21 @@ public class Element {
     // built-in
 
     public void onRender(DrawContext context, int mx, int my, float delta) {
+        if (parentPanel != null) {
+            if (parentPanel.selected == this && selectStyle != null) {
+                selectStyle.onRender(context, mx, my, delta);
+                return;
+            }
+            if (parentPanel.hovered == this && hoverStyle != null) {
+                hoverStyle.onRender(context, mx, my, delta);
+                return;
+            }
+            if (parentPanel.focused == this && focusStyle != null) {
+                focusStyle.onRender(context, mx, my, delta);
+                return;
+            }
+        }
+
         int x = getPosX();
         int y = getPosY();
 
@@ -770,5 +804,23 @@ public class Element {
 
     public List<Element> collectOrdered() {
         return new ArrayList<>(collect().stream().sorted(ORDER).toList());
+    }
+
+    private Element parsePropertiesThenSet(Element target, String excerpt) {
+        if (target == this)
+            return target;
+
+        target = target != null ? target : new Element();
+        target.parent = this.parent;
+        target.parentPanel = this.parentPanel;
+
+        this.queuedProperties.stream()
+                .filter(s -> !s.matches("^(select|hover|focus).*$"))
+                .forEach(target::queueProperty);
+
+        ScriptReader.parse(ScriptReader.firstSection(excerpt, '{', '}')).forEach(target::queueProperty);
+        target.style();
+
+        return target;
     }
 }
