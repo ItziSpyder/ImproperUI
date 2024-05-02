@@ -1,7 +1,6 @@
 package io.github.itzispyder.improperui.render.elements;
 
 import io.github.itzispyder.improperui.render.Element;
-import io.github.itzispyder.improperui.util.ChatUtils;
 import net.minecraft.util.Util;
 
 public class HyperLink extends Element {
@@ -45,7 +44,6 @@ public class HyperLink extends Element {
         super.onLeftClick(mx, my, release);
         if (link != null && !link.trim().isEmpty() && !release) {
             Util.getOperatingSystem().open(link);
-            ChatUtils.sendMessage(link);
         }
     }
 }
