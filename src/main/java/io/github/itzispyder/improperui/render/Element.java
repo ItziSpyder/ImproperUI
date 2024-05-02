@@ -40,7 +40,7 @@ public class Element {
     public int borderThickness, borderRadius, shadowDistance;
     public String clickAction, scrollAction, keyAction;
     public Alignment textAlignment;
-    public String innerText;
+    public String innerText, innerTextPrefix, innerTextSuffix;
     public float textScale;
     public boolean textShadow;
     public ChildrenAlignment childrenAlignment;
@@ -51,7 +51,7 @@ public class Element {
     public float opacity;
     public boolean draggable, scrollable, clickThrough;
     public int rotateX, rotateY, rotateZ;
-    private Element hoverStyle, focusStyle, selectStyle;
+    public Element hoverStyle, focusStyle, selectStyle;
 
 
     public Element parent;
@@ -156,6 +156,8 @@ public class Element {
         registerProperty("on-key", args -> keyAction = args.get(0).toString());
 
         registerProperty("inner-text", args -> innerText = StringUtils.color(args.getQuoteAndRemove()));
+        registerProperty("inner-text-prefix", args -> innerTextPrefix = StringUtils.color(args.getQuoteAndRemove()));
+        registerProperty("inner-text-suffix", args -> innerTextSuffix = StringUtils.color(args.getQuoteAndRemove()));
         registerProperty("text-scale", args -> textScale = args.get(0).toFloat());
         registerProperty("text-shadow", args -> textShadow = args.get(0).toBool());
         registerProperty("text-align", args -> textAlignment = args.get(0).toEnum(Alignment.class));
@@ -520,7 +522,12 @@ public class Element {
             }
 
             if (innerText != null) {
-                Text text = Text.of(innerText);
+                String raw = innerText;
+                if (innerTextPrefix != null)
+                    raw = innerTextPrefix + raw;
+                if (innerTextSuffix != null)
+                    raw = raw + innerTextSuffix;
+                Text text = Text.of(raw);
                 x += marginLeft;
                 y += marginTop;
                 int textY = (int)(y + (height - (textScale * 7)) / 2);
@@ -717,6 +724,8 @@ public class Element {
         arr.add(textScale);
         arr.add(stringify(textAlignment));
         arr.add(innerText);
+        arr.add(innerTextPrefix);
+        arr.add(innerTextSuffix);
         arr.add(textShadow);
         arr.add(stringify(textColor));
         o.add("text", arr);

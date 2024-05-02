@@ -4,6 +4,7 @@ import io.github.itzispyder.improperui.render.Element;
 import io.github.itzispyder.improperui.render.Panel;
 import io.github.itzispyder.improperui.render.elements.Button;
 import io.github.itzispyder.improperui.render.elements.CheckBox;
+import io.github.itzispyder.improperui.render.elements.HyperLink;
 import io.github.itzispyder.improperui.render.elements.TextField;
 import io.github.itzispyder.improperui.script.callbacks.BuiltInCallbacks;
 import io.github.itzispyder.improperui.util.ChatUtils;
@@ -25,8 +26,12 @@ public class ScriptParser {
     private static final Map<String, Supplier<? extends Element>> tagSuppliers = new HashMap<>() {{
         this.put("checkbox", CheckBox::new);
         this.put("textfield", TextField::new);
+        this.put("textarea", TextField::new);
         this.put("div", Element::new);
+        this.put("e", Element::new);
         this.put("button", Button::new);
+        this.put("link", HyperLink::new);
+        this.put("a", HyperLink::new);
     }};
 
     public static void main(String[] args) {
