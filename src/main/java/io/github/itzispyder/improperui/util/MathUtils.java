@@ -13,4 +13,9 @@ public class MathUtils {
     public static double clamp(double progress) {
         return clamp(progress, 0.0, 1.0);
     }
+
+    public static double round(double val, int decimalPlaces) {
+        double nth = Math.pow(10, decimalPlaces);
+        return Math.floor(val * nth) / nth;
+    }
 }

@@ -2,10 +2,7 @@ package io.github.itzispyder.improperui.script;
 
 import io.github.itzispyder.improperui.render.Element;
 import io.github.itzispyder.improperui.render.Panel;
-import io.github.itzispyder.improperui.render.elements.Button;
-import io.github.itzispyder.improperui.render.elements.CheckBox;
-import io.github.itzispyder.improperui.render.elements.HyperLink;
-import io.github.itzispyder.improperui.render.elements.TextField;
+import io.github.itzispyder.improperui.render.elements.*;
 import io.github.itzispyder.improperui.script.callbacks.BuiltInCallbacks;
 import io.github.itzispyder.improperui.util.ChatUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
@@ -32,6 +29,7 @@ public class ScriptParser {
         this.put("button", Button::new);
         this.put("link", HyperLink::new);
         this.put("a", HyperLink::new);
+        this.put("slider", Slider::new);
     }};
 
     public static void main(String[] args) {

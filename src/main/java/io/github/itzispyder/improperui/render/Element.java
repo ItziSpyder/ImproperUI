@@ -445,6 +445,18 @@ public class Element {
 
     // built-in
 
+    public String getText() {
+        if (innerText == null)
+            return null;
+
+        var text = innerText;
+        if (innerTextPrefix != null)
+            text = innerTextPrefix + text;
+        if (innerTextSuffix != null)
+            text = text + innerTextSuffix;
+        return text;
+    }
+
     public void onRender(DrawContext context, int mx, int my, float delta) {
         if (parentPanel != null) {
             if (parentPanel.selected == this && selectStyle != null) {
@@ -521,13 +533,9 @@ public class Element {
                 );
             }
 
-            if (innerText != null) {
-                String raw = innerText;
-                if (innerTextPrefix != null)
-                    raw = innerTextPrefix + raw;
-                if (innerTextSuffix != null)
-                    raw = raw + innerTextSuffix;
-                Text text = Text.of(raw);
+            var rawText = getText();
+            if (rawText != null) {
+                Text text = Text.of(rawText);
                 x += marginLeft;
                 y += marginTop;
                 int textY = (int)(y + (height - (textScale * 7)) / 2);
