@@ -17,7 +17,7 @@ public class Properties {
     }
 
     public Value getProperty(Key key) {
-        return properties.get(key.getName());
+        return properties.get(key.name());
     }
 
     public Value getProperty(String key) {
@@ -26,7 +26,7 @@ public class Properties {
 
     public void setProperty(Key key, Value value) {
         if (key != null && value != null)
-            properties.put(key.getName(), value);
+            properties.put(key.name(), value);
     }
 
     public void setProperty(String key, String value) {
@@ -109,24 +109,18 @@ public class Properties {
         return Pair.of(key, val);
     }
 
-    public static class Key {
-        private final String name;
-
+    public record Key(String name) {
         public Key(String name) {
             this.name = name.trim()
                     .replaceAll("\\s+|_", "-")
                     .replaceAll("[^a-zA-Z0-9.-]", "");
         }
 
-        public String getName() {
-            return name;
-        }
-
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof Key key))
                 return false;
-            return key.getName().equals(this.getName());
+            return key.name().equals(this.name());
         }
     }
 
