@@ -1,8 +1,10 @@
 package io.github.itzispyder.improperui.render.elements;
 
-import io.github.itzispyder.improperui.render.Element;
+import io.github.itzispyder.improperui.config.ConfigKey;
+import io.github.itzispyder.improperui.config.PropertyCache;
+import io.github.itzispyder.improperui.render.KeyHolderElement;
 
-public class CheckBox extends Element {
+public class CheckBox extends KeyHolderElement {
 
     public CheckBox() {
         super();
@@ -18,13 +20,6 @@ public class CheckBox extends Element {
         registerProperty("active", args -> setActive(args.get(0).toBool()));
     }
 
-    @Override
-    public void onLeftClick(int mx, int my, boolean release) {
-        super.onLeftClick(mx, my, release);
-        if (!release)
-            setActive(!isActive());
-    }
-
     public boolean isActive() {
         return classList.contains("active");
     }
@@ -38,5 +33,17 @@ public class CheckBox extends Element {
             classList.remove("active");
             innerText = "";
         }
+    }
+
+    @Override
+    public void onLoadKey(PropertyCache cache, ConfigKey key) {
+        var property = cache.getProperty(key);
+        if (property != null)
+            setActive(property.get(0).toBool());
+    }
+
+    @Override
+    public void onSaveKey(PropertyCache cache, ConfigKey key) {
+        cache.setProperty(key, isActive(), true);
     }
 }
