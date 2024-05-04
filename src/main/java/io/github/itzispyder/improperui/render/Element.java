@@ -140,13 +140,13 @@ public class Element {
 
         registerProperty("border-thickness", args -> borderThickness = parseIntValue(args.get(0), false));
         registerProperty("border-radius", args -> borderRadius = parseIntValue(args.get(0), false));
-        registerProperty("border-color", args -> borderColor = Color.parse(args.get(0).toString()));
-        registerProperty("border", args -> border(parseIntValue(args.get(0), false), parseIntValue(args.get(1), false), Color.parse(args.get(2).toString())));
+        registerProperty("border-color", args -> borderColor = args.get(0).toColor());
+        registerProperty("border", args -> border(parseIntValue(args.get(0), false), parseIntValue(args.get(1), false), args.get(2).toColor()));
 
-        registerProperty("fill-color", args -> fillColor = Color.parse(args.get(0).toString()));
-        registerProperty("shadow-color", args -> shadowColor = Color.parse(args.get(0).toString()));
+        registerProperty("fill-color", args -> fillColor = args.get(0).toColor());
+        registerProperty("shadow-color", args -> shadowColor = args.get(0).toColor());
         registerProperty("shadow-distance", args -> shadowDistance = parseIntValue(args.get(0), false));
-        registerProperty("shadow", args -> shadow(args.get(0).toInt(), Color.parse(args.get(0).toString())));
+        registerProperty("shadow", args -> shadow(args.get(0).toInt(), args.get(0).toColor()));
 
         registerProperty("scroll-action", args -> scrollAction = args.get(0).toString());
         registerProperty("click-action", args -> clickAction = args.get(0).toString());
@@ -161,8 +161,8 @@ public class Element {
         registerProperty("text-scale", args -> textScale = args.get(0).toFloat());
         registerProperty("text-shadow", args -> textShadow = args.get(0).toBool());
         registerProperty("text-align", args -> textAlignment = args.get(0).toEnum(Alignment.class));
-        registerProperty("text-color", args -> textColor = Color.parse(args.get(0).toString()));
-        registerProperty("color", args -> textColor = Color.parse(args.get(0).toString()));
+        registerProperty("text-color", args -> textColor = args.get(0).toColor());
+        registerProperty("color", args -> textColor = args.get(0).toColor());
 
         registerProperty("children-align", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
         registerProperty("child-align", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
@@ -170,7 +170,7 @@ public class Element {
         registerProperty("grid-columns", args -> gridColumns = args.get(0).toInt());
         registerProperty("visibility", args -> visibility = args.get(0).toEnum(Visibility.class));
         registerProperty("background-clip", args -> backgroundClip = args.get(0).toEnum(BackgroundClip.class));
-        registerProperty("background-color", args -> fillColor = Color.parse(args.get(0).toString()));
+        registerProperty("background-color", args -> fillColor = args.get(0).toColor());
         registerProperty("background-image", args -> backgroundImage = new Identifier(args.get(0).toString()));
         registerProperty("opacity", args -> opacity = args.get(0).toFloat());
         registerProperty("draggable", args -> draggable = args.get(0).toBool());
@@ -380,7 +380,6 @@ public class Element {
      */
     public void callProperty(String entry) {
         String regex = "\\s*((=>)|(->)|:|=)\\s*";
-        entry = entry.trim();
         String[] split = entry.trim().split(regex);
 
         if (split.length < 2 || !properties.containsKey(split[0]))

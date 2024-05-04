@@ -1,5 +1,7 @@
 package io.github.itzispyder.improperui.script;
 
+import io.github.itzispyder.improperui.render.math.Color;
+
 public class ScriptArgs {
 
     private String[] args;
@@ -121,6 +123,10 @@ public class ScriptArgs {
 
         public char toChar() {
             return arg.isEmpty() ? ' ' : arg.charAt(0);
+        }
+
+        public Color toColor() {
+            return Color.parse(arg);
         }
 
         @Override
