@@ -1,7 +1,10 @@
 package io.github.itzispyder.improperui.render.elements;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import io.github.itzispyder.improperui.config.ConfigKey;
+import io.github.itzispyder.improperui.config.ConfigKeyHolder;
 import io.github.itzispyder.improperui.render.Element;
+import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.MathUtils;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
@@ -9,7 +12,7 @@ import net.minecraft.client.gui.DrawContext;
 import static io.github.itzispyder.improperui.util.RenderUtils.drawText;
 import static io.github.itzispyder.improperui.util.RenderUtils.fillRect;
 
-public class Slider extends Element {
+public class Slider extends Element implements ConfigKeyHolder {
 
     public double min, max, val;
     public int decimalPlaces;
@@ -119,5 +122,28 @@ public class Slider extends Element {
 
         if (notOpaque)
             RenderSystem.setShaderColor(1, 1, 1, 1);
+    }
+
+    @Override
+    public void style() {
+        super.style();
+
+        var property = ScriptParser.CACHE.getProperty(getConfigKey());
+        if (property != null)
+            val = property.get(0).toDouble();
+    }
+
+    @Override
+    public void onLeftClick(int mx, int my, boolean release) {
+        super.onLeftClick(mx, my, release);
+
+        var key = getConfigKey();
+        if (release && key != null)
+            ScriptParser.CACHE.setProperty(key, val, true);
+    }
+
+    @Override
+    public ConfigKey getConfigKey() {
+        return ConfigKeyHolder.ELEMENT_KEY_HOLDER.apply(this);
     }
 }

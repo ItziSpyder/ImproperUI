@@ -1,6 +1,7 @@
 package io.github.itzispyder.improperui.config;
 
 import io.github.itzispyder.improperui.script.ScriptArgs;
+import io.github.itzispyder.improperui.util.FileValidationUtils;
 import io.github.itzispyder.improperui.util.misc.Pair;
 
 import java.io.*;
@@ -9,14 +10,14 @@ import java.util.Map;
 
 public class Properties {
 
-    private final Map<Key, Value> properties;
+    private final Map<String, Value> properties;
 
     public Properties() {
         this.properties = new HashMap<>();
     }
 
     public Value getProperty(Key key) {
-        return properties.get(key);
+        return properties.get(key.getName());
     }
 
     public Value getProperty(String key) {
@@ -25,11 +26,19 @@ public class Properties {
 
     public void setProperty(Key key, Value value) {
         if (key != null && value != null)
-            properties.put(key, value);
+            properties.put(key.getName(), value);
     }
 
     public void setProperty(String key, String value) {
         setProperty(new Key(key), new Value(value));
+    }
+
+    public boolean hasProperty(Key key) {
+        return properties.containsKey(key);
+    }
+
+    public boolean hasProperty(String key) {
+        return hasProperty(new Key(key));
     }
 
     public void read(InputStream in) {
@@ -40,7 +49,7 @@ public class Properties {
             while ((line = br.readLine()) != null) {
                 var pair = callProperty(line);
                 if (pair != null)
-                    properties.put(pair.left, pair.right);
+                    setProperty(pair.left, pair.right);
             }
         }
         catch (Exception ex) {
@@ -51,8 +60,9 @@ public class Properties {
     public void write(OutputStream out) {
         try (out; var osw = new OutputStreamWriter(out); var bw = new BufferedWriter(osw)) {
             StringBuilder sb = new StringBuilder();
-            for (Map.Entry<Key, Value> entry : properties.entrySet()) {
-                sb.append(entry.getKey().getName()).append(": ").append(entry.getValue().getName()).append('\n');
+            for (Map.Entry<String, Value> entry : properties.entrySet()) {
+                String line = "%s = %s".formatted(entry.getKey(), entry.getValue().getName());
+                sb.append(line).append('\n');
             }
             bw.write(sb.toString());
             bw.flush();
@@ -63,6 +73,9 @@ public class Properties {
     }
 
     public void read(String path) {
+        path = Paths.getConfigs() + path;
+        FileValidationUtils.validate(new File(path));
+
         try (FileInputStream fis = new FileInputStream(path)) {
             read(fis);
         }
@@ -72,6 +85,10 @@ public class Properties {
     }
 
     public void write(String path) {
+        path = Paths.getConfigs() + path;
+        File file = new File(path);
+        FileValidationUtils.validate(file);
+
         try (FileOutputStream fos = new FileOutputStream(path)) {
             write(fos);
         }
@@ -97,8 +114,8 @@ public class Properties {
 
         public Key(String name) {
             this.name = name.trim()
-                    .replaceAll("\\s+|_|\\.", "-")
-                    .replaceAll("[^a-zA-Z0-9-.]", "");
+                    .replaceAll("\\s+|_", "-")
+                    .replaceAll("[^a-zA-Z0-9.-]", "");
         }
 
         public String getName() {

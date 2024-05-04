@@ -15,6 +15,7 @@ public class ImproperUIClient implements ClientModInitializer {
         return system;
     }
 
+    public String modId;
     public TextRenderer codeRenderer;
     private final Set<Keybind> keybinds;
 

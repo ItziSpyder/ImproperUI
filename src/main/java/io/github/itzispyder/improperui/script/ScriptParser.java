@@ -1,5 +1,6 @@
 package io.github.itzispyder.improperui.script;
 
+import io.github.itzispyder.improperui.config.PropertyCache;
 import io.github.itzispyder.improperui.render.Element;
 import io.github.itzispyder.improperui.render.Panel;
 import io.github.itzispyder.improperui.render.elements.*;
@@ -17,8 +18,9 @@ import java.util.function.Supplier;
 
 public class ScriptParser {
 
-    private static final String ELEMENT = "[a-zA-Z]+(\\s+[#-][a-zA-Z0-9]+)*?\\s*\\{.*\\}";
+    private static final String ELEMENT = "[a-zA-Z]+(\\s+[#-][a-zA-Z0-9:._-]+)*?\\s*\\{.*\\}";
     private static final String SECTION = "\\s*\\{.*\\}\\s*$";
+    public static final PropertyCache CACHE = new PropertyCache();
 
     private static final Map<String, Supplier<? extends Element>> tagSuppliers = new HashMap<>() {{
         this.put("checkbox", CheckBox::new);
