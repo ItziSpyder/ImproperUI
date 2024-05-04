@@ -36,6 +36,13 @@ public class CheckBox extends KeyHolderElement {
     }
 
     @Override
+    public void onLeftClick(int mx, int my, boolean release) {
+        super.onLeftClick(mx, my, release);
+        if (!release)
+            setActive(!isActive());
+    }
+
+    @Override
     public void onLoadKey(PropertyCache cache, ConfigKey key) {
         var property = cache.getProperty(key);
         if (property != null)

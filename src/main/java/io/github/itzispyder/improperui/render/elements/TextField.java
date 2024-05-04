@@ -1,10 +1,14 @@
 package io.github.itzispyder.improperui.render.elements;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import io.github.itzispyder.improperui.config.ConfigKey;
+import io.github.itzispyder.improperui.config.PropertyCache;
 import io.github.itzispyder.improperui.render.Element;
+import io.github.itzispyder.improperui.render.KeyHolderElement;
 import io.github.itzispyder.improperui.render.constants.BackgroundClip;
 import io.github.itzispyder.improperui.render.constants.Visibility;
 import io.github.itzispyder.improperui.render.math.Dimensions;
+import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.MathUtils;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
@@ -18,7 +22,7 @@ import java.util.function.Function;
 
 import static io.github.itzispyder.improperui.util.RenderUtils.*;
 
-public class TextField extends Element {
+public class TextField extends KeyHolderElement {
 
     public static final int CHAR_LEN = 6;
     private int limitW, limitH;
@@ -270,6 +274,10 @@ public class TextField extends Element {
                 }, true);
             }
         }
+
+        var configKey = getConfigKey();
+        if (configKey != null && release)
+            onSaveKey(ScriptParser.CACHE, configKey);
     }
 
     public void onInput(Function<String, String> factory, boolean append) {
@@ -300,6 +308,18 @@ public class TextField extends Element {
                 break;
             }
         }
+    }
+
+    @Override
+    public void onLoadKey(PropertyCache cache, ConfigKey key) {
+        var property = cache.getProperty(key);
+        if (property != null)
+            innerText = property.getQuote();
+    }
+
+    @Override
+    public void onSaveKey(PropertyCache cache, ConfigKey key) {
+        cache.setProperty(key, "\"%s\"".formatted(innerText), true);
     }
 
     private void pollMouseSelection(int mx, int my) {

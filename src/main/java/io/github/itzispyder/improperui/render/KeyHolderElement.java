@@ -10,6 +10,14 @@ public abstract class KeyHolderElement extends Element implements ConfigKeyHolde
     public abstract void onLoadKey(PropertyCache cache, ConfigKey key);
     public abstract void onSaveKey(PropertyCache cache, ConfigKey key);
 
+    protected KeyHolderElement(int x, int y, int w, int h) {
+        super(x, y, w, h);
+    }
+
+    protected KeyHolderElement() {
+        this(0, 0, 0, 0);
+    }
+
     @Override
     public void style() {
         super.style();
