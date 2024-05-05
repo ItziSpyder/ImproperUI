@@ -36,7 +36,7 @@ public class Element {
     public int marginLeft, marginRight, marginTop, marginBottom;
     public int paddingLeft, paddingRight, paddingTop, paddingBottom;
     public int x, y, width, height;
-    public Color borderColor, fillColor, shadowColor, textColor;
+    public Color borderColor, fillColor, shadowColor, shadowFadeColor, textColor;
     public int borderThickness, borderRadius, shadowDistance;
     public String clickAction, scrollAction, keyAction;
     public Alignment textAlignment;
@@ -78,6 +78,7 @@ public class Element {
         marginLeft = marginRight = marginTop = marginBottom = 0;
         paddingLeft = paddingRight = paddingTop = paddingBottom = 0;
         shadowColor = new Color(0x80000000);
+        shadowFadeColor = shadowColor.withAlpha(0);
         fillColor = new Color(0xFF000000);
         borderColor = new Color(0xFF202020);
         textColor = new Color(0xFFD0D0D0);
@@ -144,9 +145,15 @@ public class Element {
         registerProperty("border", args -> border(parseIntValue(args.get(0), false), parseIntValue(args.get(1), false), args.get(2).toColor()));
 
         registerProperty("fill-color", args -> fillColor = args.get(0).toColor());
-        registerProperty("shadow-color", args -> shadowColor = args.get(0).toColor());
+        registerProperty("shadow-color", args -> {
+            shadowColor = args.get(0).toColor();
+            shadowFadeColor = shadowColor.withAlpha(0);
+        });
+        registerProperty("shadow-fade", args -> shadowFadeColor = args.get(0).toColor());
+        registerProperty("shadow-fade-color", args -> shadowFadeColor = args.get(0).toColor());
+        registerProperty("shadow-color-fade", args -> shadowFadeColor = args.get(0).toColor());
         registerProperty("shadow-distance", args -> shadowDistance = parseIntValue(args.get(0), false));
-        registerProperty("shadow", args -> shadow(args.get(0).toInt(), args.get(0).toColor()));
+        registerProperty("shadow", args -> shadow(args.get(0).toInt(), args.get(1).toColor()));
 
         registerProperty("scroll-action", args -> scrollAction = args.get(0).toString());
         registerProperty("click-action", args -> clickAction = args.get(0).toString());
@@ -241,6 +248,7 @@ public class Element {
     public Element shadow(int shadowDistance, Color shadowColor) {
         this.shadowDistance = shadowDistance;
         this.shadowColor = shadowColor;
+        this.shadowFadeColor = shadowColor.withAlpha(0);
         return this;
     }
 
@@ -504,7 +512,7 @@ public class Element {
                     borderRadius,
                     shadowDistance,
                     shadowColor.getHex(),
-                    shadowColor.getHexCustomAlpha(0)
+                    shadowFadeColor.getHex()
             );
             RenderUtils.fillRoundShadow(context,
                     x + marginLeft - paddingLeft,
@@ -722,6 +730,7 @@ public class Element {
         arr = new JsonArray();
         arr.add(shadowDistance);
         arr.add(stringify(shadowColor));
+        arr.add(stringify(shadowFadeColor));
         o.add("shadow", arr);
 
         arr = new JsonArray();
