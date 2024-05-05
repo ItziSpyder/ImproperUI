@@ -14,7 +14,7 @@ public class Button extends Element {
         queueProperty("margin: 2");
         queueProperty("text-align: center");
         queueProperty("text-color: dark_gray");
-        queueProperty("hovered => { border-thickness: 1; border-color: white; }");
+        queueProperty("hovered => { border-thickness: 1; border-color: dark_gray; }");
         queueProperty("selected => { border-thickness: 0; background-color: gray; text-color: light_gray; }");
     }
 }
