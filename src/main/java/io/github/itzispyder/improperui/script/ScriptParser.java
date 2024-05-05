@@ -33,6 +33,8 @@ public class ScriptParser {
         this.put("a", HyperLink::new);
         this.put("slider", Slider::new);
         this.put("radio", Radio::new);
+        this.put("textbox", TextBox::new);
+        this.put("input", TextBox::new);
     }};
 
     public static void main(String[] args) {
