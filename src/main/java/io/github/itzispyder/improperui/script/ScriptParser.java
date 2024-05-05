@@ -32,6 +32,8 @@ public class ScriptParser {
         this.put("link", HyperLink::new);
         this.put("a", HyperLink::new);
         this.put("slider", Slider::new);
+        this.put("keybinding", Keybinding::new);
+        this.put("keybind", Keybinding::new);
     }};
 
     public static void main(String[] args) {

@@ -20,12 +20,12 @@ public class Slider extends KeyHolderElement {
 
     public Slider() {
         super();
-        queueProperty("size: 100 16");
+        queueProperty("size: 100 17");
         queueProperty("range: 0 10");
         queueProperty("value: 10");
         queueProperty("decimal-places: 1");
         queueProperty("border-radius: 360");
-        queueProperty("background-color: green");
+        queueProperty("background-color: white");
         queueProperty("inner-text: \"Slider\"");
         this.fillEnd = x + width;
     }
@@ -48,8 +48,8 @@ public class Slider extends KeyHolderElement {
 
     @Override
     public void onRender(DrawContext context, int mx, int my, float delta) {
-        int x = getPosX();
-        int y = getPosY();
+        int x = getPosX() + marginLeft - paddingLeft;
+        int y = getPosY() + marginTop - paddingTop;
 
         boolean notOpaque = opacity < 1.0F;
         if (notOpaque)
@@ -71,18 +71,17 @@ public class Slider extends KeyHolderElement {
 
         val = MathUtils.round(range * ratio + min, decimalPlaces);
 
-        String text = "§o" + getText() + ": §r(" + val + ")";
-        drawText(context, text, x, y + 10 / 3, 0.9F, false);
-        fillRect(context, x, y + 10 + 10 / 3, width, 2, borderColor.getHex());
-        fillRect(context, x, y + 10 + 10 / 3, len, 2, fillColor.getHex());
+        String text = "(%s)".formatted(val);
+        drawText(context, text, x + width + 10, y + (height - 7) / 2, 0.9F, false);
+        fillRect(context, x, y + height / 2 - 1, width, 2, borderColor.getHex());
+        fillRect(context, x, y + height / 2 - 1, len, 2, fillColor.getHex());
 
-        int pad = paddingTop + marginTop + borderThickness + MathUtils.clamp(borderRadius, 0, height / 4);
-        x = fillEnd - pad;
-        y = y + 10 + 10 / 3 + 1 - pad;
+        x = fillEnd - (height / 2 + paddingLeft + paddingRight) / 2;
+        y = y + (height - (height / 2 + paddingTop + paddingBottom)) / 2;
 
         RenderUtils.fillRoundShadow(context,
-                x + marginLeft - paddingLeft - borderThickness,
-                y + marginTop - paddingTop - borderThickness,
+                x - borderThickness,
+                y - borderThickness,
                 height / 2 + paddingLeft + paddingRight + borderThickness * 2,
                 height / 2 + paddingTop + paddingBottom + borderThickness * 2,
                 borderRadius,
@@ -90,9 +89,7 @@ public class Slider extends KeyHolderElement {
                 shadowColor.getHex(),
                 shadowColor.getHexCustomAlpha(0)
         );
-        RenderUtils.fillRoundShadow(context,
-                x + marginLeft - paddingLeft,
-                y + marginTop - paddingTop,
+        RenderUtils.fillRoundShadow(context, x, y,
                 height / 2 + paddingLeft + paddingRight,
                 height / 2 + paddingTop + paddingBottom,
                 borderRadius,
@@ -100,9 +97,7 @@ public class Slider extends KeyHolderElement {
                 borderColor.getHex(),
                 borderColor.getHex()
         );
-        RenderUtils.fillRoundRect(context,
-                x + marginLeft - paddingLeft,
-                y + marginTop - paddingTop,
+        RenderUtils.fillRoundRect(context, x, y,
                 height / 2 + paddingLeft + paddingRight,
                 height / 2 + paddingTop + paddingBottom,
                 borderRadius,
@@ -110,9 +105,7 @@ public class Slider extends KeyHolderElement {
         );
         if (backgroundImage != null) {
             RenderUtils.drawRoundTexture(context,
-                    backgroundImage,
-                    x + marginLeft - paddingLeft,
-                    y + marginTop - paddingTop,
+                    backgroundImage, x, y,
                     height / 2 + paddingLeft + paddingRight,
                     height / 2 + paddingTop + paddingBottom,
                     borderRadius

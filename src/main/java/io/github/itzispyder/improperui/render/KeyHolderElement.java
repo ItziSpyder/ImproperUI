@@ -37,6 +37,15 @@ public abstract class KeyHolderElement extends Element implements ConfigKeyHolde
     }
 
     @Override
+    public void onKey(int key, int scan, boolean release) {
+        super.onKey(key, scan, release);
+
+        var configKey = getConfigKey();
+        if (configKey != null && release)
+            onSaveKey(ScriptParser.CACHE, configKey);
+    }
+
+    @Override
     public ConfigKey getConfigKey() {
         return ELEMENT_KEY_HOLDER.apply(this);
     }

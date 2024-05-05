@@ -78,7 +78,7 @@ public class Element {
         marginLeft = marginRight = marginTop = marginBottom = 0;
         paddingLeft = paddingRight = paddingTop = paddingBottom = 0;
         shadowColor = new Color(0x80000000);
-        fillColor = new Color(0xFFFFFFFF);
+        fillColor = new Color(0xFF000000);
         borderColor = new Color(0xFF202020);
         textColor = new Color(0xFFD0D0D0);
         borderRadius = borderThickness = shadowDistance = 0;
@@ -210,11 +210,14 @@ public class Element {
             return (int)(len * percent);
         }
 
-        double percent = Integer.parseInt(str.substring(0, str.length() - 2)) / 100.0;
+        int val = Integer.parseInt(str.substring(0, str.length() - 2));
+        double percent = val / 100.0;
         if (str.endsWith("vw"))
             return (int)(RenderUtils.width() * percent);
         if (str.endsWith("vh"))
             return (int)(RenderUtils.height() * percent);
+        if (str.endsWith("px"))
+            return val;
         return arg.toInt();
     }
 

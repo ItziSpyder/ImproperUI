@@ -142,7 +142,7 @@ public class Panel extends Screen {
 
         super.keyPressed(keyCode, scanCode, modifiers);
 
-        if (focused != null && focused.pollTypeable(keyCode, scanCode, false))
+        if (focused != null)
             focused.onKey(keyCode, scanCode, false);
         return true;
     }
@@ -158,7 +158,7 @@ public class Panel extends Screen {
 
         super.keyReleased(keyCode, scanCode, modifiers);
 
-        if (focused != null && focused.pollTypeable(keyCode, scanCode, false))
+        if (focused != null)
             focused.onKey(keyCode, scanCode, true);
         return true;
     }
