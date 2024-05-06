@@ -1,12 +1,8 @@
 package io.github.itzispyder.improperui.config;
 
-import io.github.itzispyder.improperui.client.ImproperUIClient;
-
 import java.io.File;
 
 public class Paths {
-
-    private static final ImproperUIClient system = ImproperUIClient.getInstance();
 
     public static final String FOLDER = ".improper-ui/";
     public static final String SCRIPTS = FOLDER + "scripts/";
@@ -30,15 +26,7 @@ public class Paths {
         return SCRIPTS + modId + "/";
     }
 
-    public static String getScripts() {
-        return getScripts(system.modId);
-    }
-
     public static String getConfigs(String modId) {
         return CONFIGS + modId + "/";
-    }
-
-    public static String getConfigs() {
-        return getConfigs(system.modId);
     }
 }

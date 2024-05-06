@@ -10,7 +10,6 @@ public class ImproperUIClient implements ClientModInitializer {
         return system;
     }
 
-    public String modId;
     public TextRenderer codeRenderer;
 
     public ImproperUIClient() {

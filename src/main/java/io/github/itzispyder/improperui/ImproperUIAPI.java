@@ -1,6 +1,5 @@
 package io.github.itzispyder.improperui;
 
-import io.github.itzispyder.improperui.client.ImproperUIClient;
 import io.github.itzispyder.improperui.config.Paths;
 import io.github.itzispyder.improperui.render.Element;
 import io.github.itzispyder.improperui.render.ImproperUIPanel;
@@ -19,8 +18,6 @@ public class ImproperUIAPI {
 
     private static boolean initialized = false;
     private static final Set<String> paths = new HashSet<>();
-    private static String modId;
-    private static Class<? extends ModInitializer> initializer;
 
     /**
      * Example: ImproperUI.init("improperui", ImproperUI.class, "scripts/example.ui");
@@ -32,10 +29,7 @@ public class ImproperUIAPI {
         if (initialized)
             return;
         ImproperUIAPI.initialized = true;
-        ImproperUIAPI.modId = modId;
         ImproperUIAPI.paths.clear();
-        ImproperUIAPI.initializer = initializer;
-        ImproperUIClient.getInstance().modId = modId;
         Paths.init();
 
         var loader = initializer.getClassLoader();
@@ -44,13 +38,8 @@ public class ImproperUIAPI {
         }
     }
 
-    public static void reload() {
-        reInit();
-    }
-
-    public static void reInit() {
-        initialized = false;
-        init(modId, initializer, paths.toArray(String[]::new));
+    public static void reload(String modId, Class<? extends ModInitializer> initializer, String... scriptPaths) {
+        reInit(modId, initializer, scriptPaths);
     }
 
     public static void reInit(String modId, Class<? extends ModInitializer> initializer, String... scriptPaths) {
@@ -106,10 +95,11 @@ public class ImproperUIAPI {
 
     /**
      * Parses and runs the script from the path provided
+     * @param modId Multiple mods may use ImproperUI at the same time with their own respective scripts, specify the mod ID!
      * @param fileName The file NAME, NOT THE FILE PATH
      */
-    public static void parseAndRunFile(String fileName) {
-        ScriptParser.run(new File(Paths.getScripts(ImproperUIClient.getInstance().modId) + fileName));
+    public static void parseAndRunFile(String modId, String fileName) {
+        ScriptParser.run(new File(Paths.getScripts(modId) + fileName));
     }
 
     public static void parseAndRunScript(String script, CallbackListener... callbackListeners) {
@@ -120,11 +110,12 @@ public class ImproperUIAPI {
 
     /**
      * Parses and runs the script from the path provided
+     * @param modId Multiple mods may use ImproperUI at the same time with their own respective scripts, specify the mod ID!
      * @param fileName The file NAME, NOT THE FILE PATH
      * @param callbackListeners A list of callbacks that you want to add to the panel screen
      */
-    public static void parseAndRunFile(String fileName, CallbackListener... callbackListeners) {
-        File script = new File(Paths.getScripts(ImproperUIClient.getInstance().modId) + fileName);
+    public static void parseAndRunFile(String modId, String fileName, CallbackListener... callbackListeners) {
+        File script = new File(Paths.getScripts(modId) + fileName);
         ImproperUIPanel panel = new ImproperUIPanel(script, callbackListeners);
         MinecraftClient client = MinecraftClient.getInstance();
         client.execute(() -> client.setScreen(panel));
