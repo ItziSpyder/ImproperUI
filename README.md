@@ -115,7 +115,7 @@ If you are running a script, provide your custom callback in the creation argume
 
 ```java
 public void openScreen() {
-    ImproperUIAPI.parseAndRunFile("testing.ui", new CustomCallback() /* and more... */);
+    ImproperUIAPI.parseAndRunFile("yourModId", "testing.ui", new CustomCallback() /* and more... */);
 }
 ```
 
