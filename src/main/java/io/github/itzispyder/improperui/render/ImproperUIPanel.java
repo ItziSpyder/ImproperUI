@@ -7,7 +7,6 @@ import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.ChatUtils;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -17,25 +16,35 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Panel extends Screen {
+public class ImproperUIPanel extends Screen {
 
     public Element selected, focused, hovered;
     public boolean shiftKeyPressed, altKeyPressed, ctrlKeyPressed;
     public final int[] cursor;
     private final List<Element> children;
     private final List<CallbackListener> callbackListeners;
-    private String scriptPath;
 
-    public Panel() {
+    public ImproperUIPanel() {
         super(Text.of("Custom Scripted Panel Screen"));
         children = new ArrayList<>();
         callbackListeners = new ArrayList<>();
         cursor = new int[2];
     }
 
-    public Panel(String scriptPath) {
+    public ImproperUIPanel(List<Element> widgets, CallbackListener... callbackListeners) {
         this();
-        this.scriptPath = scriptPath;
+        for (var callback : callbackListeners)
+            this.registerCallback(callback);
+        for (var child : widgets)
+            this.addChild(child);
+    }
+
+    public ImproperUIPanel(String uiScript, CallbackListener... callbackListeners) {
+        this(ScriptParser.parse(uiScript), callbackListeners);
+    }
+
+    public ImproperUIPanel(File uiScript, CallbackListener... callbackListeners) {
+        this(ScriptParser.parseFile(uiScript), callbackListeners);
     }
 
     @Override
@@ -161,12 +170,6 @@ public class Panel extends Screen {
         if (focused != null)
             focused.onKey(keyCode, scanCode, true);
         return true;
-    }
-
-    @Override
-    public void resize(MinecraftClient client, int width, int height) {
-        if (scriptPath != null)
-            ScriptParser.run(new File(scriptPath));
     }
 
     @Override

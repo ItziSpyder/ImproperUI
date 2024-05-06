@@ -3,6 +3,7 @@ package io.github.itzispyder.improperui;
 import io.github.itzispyder.improperui.client.ImproperUIClient;
 import io.github.itzispyder.improperui.config.Paths;
 import io.github.itzispyder.improperui.render.Element;
+import io.github.itzispyder.improperui.render.ImproperUIPanel;
 import io.github.itzispyder.improperui.script.ScriptParser;
 import net.fabricmc.api.ModInitializer;
 
@@ -24,6 +25,7 @@ public class ImproperUI implements ModInitializer {
         initialized = true;
         ImproperUIClient.getInstance().modId = modId;
         Paths.init();
+        ImproperUIPanel panel = new ImproperUIPanel();
     }
 
     public static List<Element> parse(String script) {

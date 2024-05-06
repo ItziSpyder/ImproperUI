@@ -2,7 +2,7 @@ package io.github.itzispyder.improperui.script;
 
 import io.github.itzispyder.improperui.config.PropertyCache;
 import io.github.itzispyder.improperui.render.Element;
-import io.github.itzispyder.improperui.render.Panel;
+import io.github.itzispyder.improperui.render.ImproperUIPanel;
 import io.github.itzispyder.improperui.render.elements.*;
 import io.github.itzispyder.improperui.script.callbacks.BuiltInCallbacks;
 import io.github.itzispyder.improperui.util.ChatUtils;
@@ -42,35 +42,25 @@ public class ScriptParser {
     }
 
     public static void run(File file) {
-        try {
-            var elements = parseFile(file);
-            var mc = MinecraftClient.getInstance();
+        var elements = parseFile(file);
+        var mc = MinecraftClient.getInstance();
 
-            Panel panel = new Panel();
-            panel.registerCallback(new BuiltInCallbacks());
-            elements.forEach(panel::addChild);
+        ImproperUIPanel panel = new ImproperUIPanel();
+        panel.registerCallback(new BuiltInCallbacks());
+        elements.forEach(panel::addChild);
 
-            mc.execute(() -> mc.setScreen(panel));
-        }
-        catch (Exception ex) {
-            ChatUtils.sendMessage(StringUtils.color("&cError parsing script: " + ex.getMessage()));
-        }
+        mc.execute(() -> mc.setScreen(panel));
     }
 
     public static void run(String script) {
-        try {
-            var elements = parse(script);
-            var mc = MinecraftClient.getInstance();
+        var elements = parse(script);
+        var mc = MinecraftClient.getInstance();
 
-            Panel panel = new Panel();
-            panel.registerCallback(new BuiltInCallbacks());
-            elements.forEach(panel::addChild);
+        ImproperUIPanel panel = new ImproperUIPanel();
+        panel.registerCallback(new BuiltInCallbacks());
+        elements.forEach(panel::addChild);
 
-            mc.execute(() -> mc.setScreen(panel));
-        }
-        catch (Exception ex) {
-            ChatUtils.sendMessage(StringUtils.color("&cError parsing script: " + ex.getMessage()));
-        }
+        mc.execute(() -> mc.setScreen(panel));
     }
 
     public static List<Element> parseFile(File file) {
@@ -83,14 +73,18 @@ public class ScriptParser {
 
     public static List<Element> parse(String script) {
         List<Element> result = new ArrayList<>();
-
-        script = ScriptReader.condenseLines(script);
-        for (String section : ScriptReader.parse(script)) {
-            result.add(parseInternal(section));
+        try {
+            script = ScriptReader.condenseLines(script);
+            for (String section : ScriptReader.parse(script)) {
+                result.add(parseInternal(section));
+            }
+            for (Element element : result) {
+                element.style();
+                element.printAll();
+            }
         }
-        for (Element element : result) {
-            element.style();
-            element.printAll();
+        catch (Exception ex) {
+            ChatUtils.sendMessage(StringUtils.color("&cError parsing script: " + ex.getMessage()));
         }
         return result;
     }

@@ -55,7 +55,7 @@ public class Element {
 
 
     public Element parent;
-    public Panel parentPanel;
+    public ImproperUIPanel parentPanel;
     private final List<Element> children;
     private final Map<String, Consumer<ScriptArgs>> properties;
     private final List<String> queuedProperties;
@@ -680,7 +680,7 @@ public class Element {
         children.forEach(Element::onTick);
     }
 
-    protected void setParentPanel(Panel parentPanel) {
+    protected void setParentPanel(ImproperUIPanel parentPanel) {
         this.parentPanel = parentPanel;
         this.children.forEach(child -> child.setParentPanel(parentPanel));
     }
