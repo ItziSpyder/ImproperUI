@@ -166,7 +166,7 @@ This creates a slider that sets and saves values do the config.
 | radio       | ✅                            | ❌                | ✅              |          | active:boolean                                                               |
 | button      | ✅                            | ❌                | ❌              |          |                                                                              |
 | link        | ✅                            | ❌                | ❌              | a        | href:string                                                                  |
-| slider      | ❌                            | ❌                | ✅              |          | min:double max:doublevalue:double range:double,double decimal-places:integer |
+| slider      | ❌                            | ❌                | ✅              |          | min:double max:double value:double range:double,double decimal-places:integer |
 | input       | ❌                            | ❌                | ✅              | textbox  | pattern:quote placeholder:quote                                              |
 | textfield   | ❌                            | ❌                | ✅              | textarea |                                                                              |
 
