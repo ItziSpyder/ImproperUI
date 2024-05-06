@@ -28,7 +28,7 @@ public interface CallbackListener {
             }
             return;
         }
-        error("method \"%s.%s()\" not found!", this.getClass().getSimpleName(), methodName);
+        // error("method \"%s.%s()\" not found!", this.getClass().getSimpleName(), methodName);
     }
 
     default void error(String message, Object... args) {
