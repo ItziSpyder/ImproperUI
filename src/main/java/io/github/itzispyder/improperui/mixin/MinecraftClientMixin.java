@@ -27,6 +27,8 @@ public abstract class MinecraftClientMixin {
     @Shadow @Nullable public HitResult crosshairTarget;
     @Shadow @Final private FontManager fontManager;
 
+    @Shadow @Final public static Identifier UNICODE_FONT_ID;
+
     @Inject(method = "doAttack", at = @At("HEAD"))
     public void setScreen(CallbackInfoReturnable<Boolean> cir) {
         if (crosshairTarget instanceof BlockHitResult hit && hit.getType() != HitResult.Type.MISS) {
@@ -37,6 +39,6 @@ public abstract class MinecraftClientMixin {
     @Inject(method = "initFont", at = @At("TAIL"))
     public void initFont(boolean forcesUnicode, CallbackInfo ci) {
         var fonts = ((FontManagerAccessor)this.fontManager);
-        system.codeRenderer = fonts.createRenderer(new Identifier("improperui", "courier-new"));
+        system.codeRenderer = fonts.createRenderer(UNICODE_FONT_ID);
     }
 }

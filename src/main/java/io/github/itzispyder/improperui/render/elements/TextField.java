@@ -24,7 +24,7 @@ import static io.github.itzispyder.improperui.util.RenderUtils.*;
 
 public class TextField extends KeyHolderElement {
 
-    public static final int CHAR_LEN = 6;
+    public static final int CHAR_W = 4, CHAR_H = 6;
     private int limitW, limitH;
     private HistoryQueue editHistory;
     private CharacterElement[][] chars;
@@ -34,12 +34,12 @@ public class TextField extends KeyHolderElement {
 
     public TextField(String innerText, int x, int y, int w, int h) {
         super(x, y, Math.max(w, 50), Math.max(h, 18));
-        int addW = w % CHAR_LEN == 0 ? 0 : 1;
-        int addH = h % CHAR_LEN == 0 ? 0 : 1;
-        this.limitW = (int)(Math.floor(w / (double)CHAR_LEN) + addW) - 2;
-        this.limitH = (int)(Math.floor(h / (double)CHAR_LEN) + addH) - 2;
-        this.width = (limitW + 2) * CHAR_LEN;
-        this.height = (limitH + 2) * CHAR_LEN;
+        int addW = w % CHAR_W == 0 ? 0 : 1;
+        int addH = h % CHAR_H == 0 ? 0 : 1;
+        this.limitW = (int)(Math.floor(w / (double) CHAR_W) + addW) - 2;
+        this.limitH = (int)(Math.floor(h / (double) CHAR_H) + addH) - 2;
+        this.width = (limitW + 2) * CHAR_W;
+        this.height = (limitH + 2) * CHAR_H;
         this.innerText = innerText;
         this.chars = new CharacterElement[limitW][limitH];
         this.updateInnerText();
@@ -62,12 +62,12 @@ public class TextField extends KeyHolderElement {
     @Override
     public void style() {
         super.style();
-        int addW = width % CHAR_LEN == 0 ? 0 : 1;
-        int addH = height % CHAR_LEN == 0 ? 0 : 1;
-        this.limitW = (int)(Math.floor(width / (double)CHAR_LEN) + addW) - 2;
-        this.limitH = (int)(Math.floor(height / (double)CHAR_LEN) + addH) - 2;
-        this.width = (limitW + 2) * CHAR_LEN;
-        this.height = (limitH + 2) * CHAR_LEN;
+        int addW = width % CHAR_W == 0 ? 0 : 1;
+        int addH = height % CHAR_H == 0 ? 0 : 1;
+        this.limitW = (int)(Math.floor(width / (double) CHAR_W) + addW) - 2;
+        this.limitH = (int)(Math.floor(height / (double) CHAR_H) + addH) - 2;
+        this.width = (limitW + 2) * CHAR_W;
+        this.height = (limitH + 2) * CHAR_H;
         this.chars = new CharacterElement[limitW][limitH];
         this.updateInnerText();
         this.selStart = new Point();
@@ -359,7 +359,7 @@ public class TextField extends KeyHolderElement {
             char c = innerText.charAt(i);
 
             if (cx < limitW) {
-                var che = new CharacterElement(i, cx, cy, String.valueOf(c), cx * CHAR_LEN + CHAR_LEN, cy * CHAR_LEN + CHAR_LEN);
+                var che = new CharacterElement(i, cx, cy, String.valueOf(c), cx * CHAR_W + CHAR_W, cy * CHAR_H + CHAR_H);
                 chars[cx][cy] = che;
                 this.addChild(che);
                 cx++;
@@ -479,7 +479,7 @@ public class TextField extends KeyHolderElement {
         public final int idc, idx, idy;
 
         public CharacterElement(int idc, int idx, int idy, String ch, int x, int y) {
-            super(x, y, CHAR_LEN, CHAR_LEN);
+            super(x, y, CHAR_W, CHAR_H);
             this.ch = ch;
             this.idc = idc;
             this.idx = idx;
@@ -508,7 +508,7 @@ public class TextField extends KeyHolderElement {
                 int color = TextField.this.parentPanel.focused == TextField.this ?
                         (selected ? 0xFF000000 : TextField.this.textColor.brighter().brighter().getHex()) :
                         TextField.this.textColor.getHex();
-                drawDefaultCode(context, ch, x, y, false, color);
+                drawDefaultCode(context, ch, x, y - 2, false, color);
             }
 
             if (selectionBlinking && cursor == idc) {

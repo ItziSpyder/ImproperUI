@@ -57,6 +57,22 @@ public class ScriptParser {
         }
     }
 
+    public static void run(String script) {
+        try {
+            var elements = parse(script);
+            var mc = MinecraftClient.getInstance();
+
+            Panel panel = new Panel();
+            panel.registerCallback(new BuiltInCallbacks());
+            elements.forEach(panel::addChild);
+
+            mc.execute(() -> mc.setScreen(panel));
+        }
+        catch (Exception ex) {
+            ChatUtils.sendMessage(StringUtils.color("&cError parsing script: " + ex.getMessage()));
+        }
+    }
+
     public static List<Element> parseFile(File file) {
         if (file == null || !file.exists())
             return new ArrayList<>();
