@@ -119,6 +119,8 @@ public void openScreen() {
 }
 ```
 
+<br>
+
 ### Helper Methods
 ```yml
 Helper Methods:
@@ -137,6 +139,8 @@ API:
   - ImproperUIAPI.reInit() // re-init the API with possibly a different Mod ID
 ```
 
+<br>
+
 ### Config Keys
 A config key consists of three parts: `modId, confileFile, propertyName`. They are used for
 saving configuration values for, let's say, your sliders and checkboxes. 
@@ -150,6 +154,8 @@ slider #someId -yourModId:config.properties:testing-slider-value -someAnotherAtt
 }
 ```
 This creates a slider that sets and saves values do the config.
+
+<br>
 
 ### This Project is Never Complete
 So pull request your ideas!
