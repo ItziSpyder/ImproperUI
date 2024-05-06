@@ -7,8 +7,8 @@ public class ImproperUI implements ModInitializer {
     @Override
     public void onInitialize() {
         ImproperUIAPI.init("improperui", ImproperUI.class,
-                "scripts/what.ui",
-                "scripts/screen.ui"
+                "scripts/homescreen.ui",
+                "scripts/example.ui"
         );
     }
 }
