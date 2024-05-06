@@ -17,6 +17,86 @@ This screen is scripted using ImproperUI Script:
 
 ![demo](./assets/demo.png)
 
+### Adding ImproperUI to your Project
+To add ImproperUI, you download it as a jar and then add it to gradle manually.
+I didn't want to create an online repository and I didn't want to make it a separate mod. Womp Womp.
+
+#### Step 1
+Eliminate possible duplicates in case other projects also use ImproperUI.
+```gradle
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.archivesBaseName}"}
+    }
+    from {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+}
+```
+
+#### Step 2
+[Download the jar](https://github.com/ItziSpyder/ImproperUI/releases/latest) and add it to your gradle as a dependency.
+```gradle
+dependencies {
+    implementation files("libs/PDK-1.3.3.jar")
+}
+```
+
+#### Step 3
+Make sure that the following mixins are declared in your `yourmodid.mixins.json`. This is because this library initializes 
+custom fonts and needs MinecraftClient mixins to upload them to resource manager.
+```txt
+- io.github.itzispyder.improperui.mixin.MixinFontManager
+- io.github.itzispyder.improperui.mixin.MixinMinecraftClient
+```
+Here's an example of how I would do this in my case:
+```json
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.itzispyder",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+  ],
+  "client": [
+    "improperui.mixin.MixinFontManager",
+    "improperui.mixin.MixinMinecraftClient",
+    "myotherproject.mixin.MixinSomething1",
+    "myotherproject.mixin.MixinSomething2",
+    "myotherproject.mixin.MixinSomething3"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
+```
+
+#### Step 4 (Final Step)
+Initialize the API. In this section, you call the init() function on ImproperUIAPI, then
+provide:
+- the `modId` your YOUR mod
+- the `main class mod initializer` of YOUR mod
+- then finally a list of script paths inside the `src/main/resources/` folder of YOUR mod.
+
+```java
+public class ImproperUI implements ModInitializer {
+
+    @Override
+    public void onInitialize() {
+        ImproperUIAPI.init("improperui", ImproperUI.class,
+                "scripts/what.ui",
+                "scripts/screen.ui"
+        );
+    }
+}
+```
+**DO NOTE THAT WHEN YOU ACTUALY TRY TO PARSE OR RUN THE SCRIPTS, YOU REFERENCE THE SCRIPT FILE'S NAME NOT THE PATH DECLARED HERE!**
+
+<br>
+
 ### Events
 To listen to events declared from your script, create a new class that implements `CallbackListener`.
 
@@ -45,16 +125,42 @@ element {
 }
 ```
 
-Finally, when you declare a `Panel` screen, register the callback to your panel:
+Finally, when you declare a `ImproperUIPanel` screen, register the callback to your panel:
 
 ```java
 public void openScreen() {
-    Panel panel = new Panel();
+    ImprperUIPanel panel = new ImprperUIPanel();
     panel.registerCallback(new CustomCallback());
     // parse script and add children elements here
     // panel.addChild()
     MinecraftClient.getInstance().setScreen(panel);
 }
+```
+
+If you are running a script, provide your custom callback in the creation arguments:
+
+```java
+public void openScreen() {
+    ImproperUIAPI.parseAndRunFile("testing.ui", new CustomCallback() /* and more... */);
+}
+```
+
+### Helper Methods
+```yml
+Helper Methods:
+  - ImproperUIPanel.collect() // a list of all elements and widgets, even their children
+  - ImproperUIPanel.collectOrdered() // a sorted list based on z-index, of all elements and widgets including their children
+  - ImproperUIPanel.collectById() // a list of elements with specified ID
+  - ImproperUIPanel.collectByClassAttribute() // a list of elements with specified class attribute
+  - ImproperUIPanel.collectById() // first element with specified ID
+  - ImproperUIPanel.collectByClassAttribute() // first element with specified class attribute
+
+API:
+  - ImproperUIAPI.parse() // parses a script then returns all parsed result elements
+  - ImproperUIAPI.parseAndRunFile() // parses a registered script file NAME (NOT PATH) from init() and opens the screen with the elements 
+  - ImproperUIAPI.parseAndRunScript() // parses a registered script from init() and opens the screen with the elements
+  - ImproperUIAPI.reload() // reloads the API
+  - ImproperUIAPI.reInit() // re-init the API with possibly a different Mod ID
 ```
 
 ### This Project is Never Complete

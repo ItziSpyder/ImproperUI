@@ -250,4 +250,34 @@ public class ImproperUIPanel extends Screen {
     public List<Element> collectOrdered() {
         return new ArrayList<>(collect().stream().sorted(Element.ORDER).toList());
     }
+
+    public List<Element> collectById(String id) {
+        List<Element> list = new ArrayList<>();
+        for (Element child : collect())
+            if (child.getId().equals(id))
+                list.add(child);
+        return list;
+    }
+
+    public Element collectFirstById(String id) {
+        for (Element child : collect())
+            if (child.getId().equals(id))
+                return child;
+        return null;
+    }
+
+    public List<Element> collectByClassAttribute(String classAttribute) {
+        List<Element> list = new ArrayList<>();
+        for (Element child : collect())
+            if (child.classList.contains(classAttribute))
+                list.add(child);
+        return list;
+    }
+
+    public Element collectFirstByClassAttribute(String classAttribute) {
+        for (Element child : collect())
+            if (child.classList.contains(classAttribute))
+                return child;
+        return null;
+    }
 }

@@ -53,6 +53,11 @@ public class ImproperUIAPI {
         init(modId, initializer, paths.toArray(String[]::new));
     }
 
+    public static void reInit(String modId, Class<? extends ModInitializer> initializer, String... scriptPaths) {
+        initialized = false;
+        init(modId, initializer, scriptPaths);
+    }
+
     private static void copyResource(String modId, ClassLoader loader, String path) {
         try {
             String name = path.trim().replaceAll(".*/", "");
@@ -99,8 +104,12 @@ public class ImproperUIAPI {
         ScriptParser.run(script);
     }
 
-    public static void parseAndRunPath(String path) {
-        ScriptParser.run(new File(Paths.getScripts(ImproperUIClient.getInstance().modId) + path));
+    /**
+     * Parses and runs the script from the path provided
+     * @param fileName The file NAME, NOT THE FILE PATH
+     */
+    public static void parseAndRunFile(String fileName) {
+        ScriptParser.run(new File(Paths.getScripts(ImproperUIClient.getInstance().modId) + fileName));
     }
 
     public static void parseAndRunScript(String script, CallbackListener... callbackListeners) {
@@ -109,8 +118,13 @@ public class ImproperUIAPI {
         client.execute(() -> client.setScreen(panel));
     }
 
-    public static void parseAndRunPath(String path, CallbackListener... callbackListeners) {
-        File script = new File(Paths.getScripts(ImproperUIClient.getInstance().modId) + path);
+    /**
+     * Parses and runs the script from the path provided
+     * @param fileName The file NAME, NOT THE FILE PATH
+     * @param callbackListeners A list of callbacks that you want to add to the panel screen
+     */
+    public static void parseAndRunFile(String fileName, CallbackListener... callbackListeners) {
+        File script = new File(Paths.getScripts(ImproperUIClient.getInstance().modId) + fileName);
         ImproperUIPanel panel = new ImproperUIPanel(script, callbackListeners);
         MinecraftClient client = MinecraftClient.getInstance();
         client.execute(() -> client.setScreen(panel));
