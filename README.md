@@ -41,38 +41,12 @@ jar {
 [Download the jar](https://github.com/ItziSpyder/ImproperUI/releases/latest) and add it to your project files, as well as build.gradle as a dependency.
 ```gradle
 dependencies {
-    implementation files("libs/ImproperUI-theVersionYouWant.jar")
+    compileOnly files("libs/ImproperUI-theVersionYouWant.jar")
 }
 ```
 
 #### Step 3
-Make sure that the following mixins are declared in your `yourmodid.mixins.json`. This is because this library initializes 
-custom fonts and needs MinecraftClient mixins to upload them to resource manager.
-```txt
-- io.github.itzispyder.improperui.mixin.MixinFontManager
-- io.github.itzispyder.improperui.mixin.MixinMinecraftClient
-```
-Here's an example of how I would do this in my case:
-```json
-{
-  "required": true,
-  "minVersion": "0.8",
-  "package": "io.github.itzispyder",
-  "compatibilityLevel": "JAVA_17",
-  "mixins": [
-  ],
-  "client": [
-    "improperui.mixin.MixinFontManager",
-    "improperui.mixin.MixinMinecraftClient",
-    "myotherproject.mixin.MixinSomething1",
-    "myotherproject.mixin.MixinSomething2",
-    "myotherproject.mixin.MixinSomething3"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
-}
-```
+Add the downloaded jar, as a mod, to your mods folder! You have to this use this a library!
 
 #### Step 4 (Final Step)
 Initialize the API. In this section, you call the init() function on ImproperUIAPI, then
@@ -162,6 +136,20 @@ API:
   - ImproperUIAPI.reload() // reloads the API
   - ImproperUIAPI.reInit() // re-init the API with possibly a different Mod ID
 ```
+
+### Config Keys
+A config key consists of three parts: `modId, confileFile, propertyName`. They are used for
+saving configuration values for, let's say, your sliders and checkboxes. 
+
+To use a config key in your script, simply type out all three parts **WITH NO SPACES AND SEPARATED BY A COLON (:)**.
+Then use that string as an attribute class for the element:
+
+```txt
+slider #someId -yourModId:config.properties:testing-slider-value -someAnotherAttributeClass {
+    
+}
+```
+This creates a slider that sets and saves values do the config.
 
 ### This Project is Never Complete
 So pull request your ideas!
