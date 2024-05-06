@@ -103,7 +103,7 @@ Finally, when you declare a `ImproperUIPanel` screen, register the callback to y
 
 ```java
 public void openScreen() {
-    ImprperUIPanel panel = new ImprperUIPanel();
+    ImproperUIPanel panel = new ImproperUIPanel();
     panel.registerCallback(new CustomCallback());
     // parse script and add children elements here
     // panel.addChild()
