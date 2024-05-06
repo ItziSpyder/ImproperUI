@@ -157,6 +157,22 @@ This creates a slider that sets and saves values do the config.
 
 <br>
 
+### Tags
+|             |                              |                  |                |          |                                                                              |
+| ----------- | ---------------------------- | ---------------- | -------------- | -------- | ---------------------------------------------------------------------------- |
+| Element Tag | Dynamic Hover, Select, Focus | Children Support | Config Support | Aliases  | Specific Properties: type                                                    |
+| element     | ✅                            | ✅                | ✅              | e, div   |                                                                              |
+| checkbox    | ✅                            | ❌                | ✅              |          | active:boolean                                                               |
+| radio       | ✅                            | ❌                | ✅              |          | active:boolean                                                               |
+| button      | ✅                            | ❌                | ❌              |          |                                                                              |
+| link        | ✅                            | ❌                | ❌              | a        | href:string                                                                  |
+| slider      | ❌                            | ❌                | ✅              |          | min:double max:doublevalue:double range:double,double decimal-places:integer |
+| input       | ❌                            | ❌                | ✅              | textbox  | pattern:quote placeholder:quote                                              |
+| textfield   | ❌                            | ❌                | ✅              | textarea |                                                                              |
+
+
+<br>
+
 ### This Project is Never Complete
 So pull request your ideas!
 Star us to receive latest interesting updates/pull requests!
