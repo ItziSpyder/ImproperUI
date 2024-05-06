@@ -38,10 +38,10 @@ jar {
 ```
 
 #### Step 2
-[Download the jar](https://github.com/ItziSpyder/ImproperUI/releases/latest) and add it to your gradle as a dependency.
+[Download the jar](https://github.com/ItziSpyder/ImproperUI/releases/latest) and add it to your project files, as well as build.gradle as a dependency.
 ```gradle
 dependencies {
-    implementation files("libs/PDK-1.3.3.jar")
+    implementation files("libs/ImproperUI-theVersionYouWant.jar")
 }
 ```
 
