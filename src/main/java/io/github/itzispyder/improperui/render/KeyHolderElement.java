@@ -24,7 +24,7 @@ public abstract class KeyHolderElement extends Element implements ConfigKeyHolde
 
         var key = getConfigKey();
         if (key != null)
-            onLoadKey(ScriptParser.CACHE, key);
+            onLoadKey(ScriptParser.getCache(key.modId), key);
     }
 
     @Override
@@ -33,7 +33,7 @@ public abstract class KeyHolderElement extends Element implements ConfigKeyHolde
 
         var key = getConfigKey();
         if (key != null && release)
-            onSaveKey(ScriptParser.CACHE, key);
+            onSaveKey(ScriptParser.getCache(key.modId), key);
     }
 
     @Override
@@ -42,7 +42,7 @@ public abstract class KeyHolderElement extends Element implements ConfigKeyHolde
 
         var configKey = getConfigKey();
         if (configKey != null && release)
-            onSaveKey(ScriptParser.CACHE, configKey);
+            onSaveKey(ScriptParser.getCache(configKey.modId), configKey);
     }
 
     @Override

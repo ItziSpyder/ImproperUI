@@ -277,7 +277,7 @@ public class TextField extends KeyHolderElement {
 
         var configKey = getConfigKey();
         if (configKey != null && release)
-            onSaveKey(ScriptParser.CACHE, configKey);
+            onSaveKey(ScriptParser.getCache(configKey.modId), configKey);
     }
 
     public void onInput(Function<String, String> factory, boolean append) {

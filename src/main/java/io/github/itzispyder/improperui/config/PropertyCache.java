@@ -6,16 +6,18 @@ import java.util.Map;
 public class PropertyCache {
 
     private final Map<String, Properties> cache;
+    private final String modId;
 
-    public PropertyCache() {
+    public PropertyCache(String modId) {
         this.cache = new HashMap<>();
+        this.modId = modId;
     }
 
     public void upload(String path, Properties properties) {
         if (properties == null)
             return;
         cache.put(path, properties);
-        properties.read(path);
+        properties.read(modId, path);
     }
 
     public Properties get(String path) {
@@ -45,12 +47,12 @@ public class PropertyCache {
 
     public void save(ConfigKey key) {
         if (key != null)
-            get(key.path).write(key.path);
+            get(key.path).write(modId, key.path);
     }
 
     public void clear() {
         for (Map.Entry<String, Properties> entry : cache.entrySet()) {
-            entry.getValue().write(entry.getKey());
+            entry.getValue().write(modId, entry.getKey());
         }
         cache.clear();
     }

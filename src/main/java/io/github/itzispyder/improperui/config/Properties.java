@@ -72,8 +72,8 @@ public class Properties {
         }
     }
 
-    public void read(String path) {
-        path = Paths.getConfigs() + path;
+    public void read(String modId, String path) {
+        path = Paths.getConfigs(modId) + path;
         FileValidationUtils.validate(new File(path));
 
         try (FileInputStream fis = new FileInputStream(path)) {
@@ -84,8 +84,8 @@ public class Properties {
         }
     }
 
-    public void write(String path) {
-        path = Paths.getConfigs() + path;
+    public void write(String modId, String path) {
+        path = Paths.getConfigs(modId) + path;
         File file = new File(path);
         FileValidationUtils.validate(file);
 

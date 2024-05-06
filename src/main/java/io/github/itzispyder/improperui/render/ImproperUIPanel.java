@@ -177,12 +177,6 @@ public class ImproperUIPanel extends Screen {
         children.forEach(Element::onTick);
     }
 
-    @Override
-    public void close() {
-        super.close();
-        ScriptParser.CACHE.clear();
-    }
-
     public void addChild(Element child) {
         if (child == null || child.parentPanel != null || child.parent != null || children.contains(child))
             return;

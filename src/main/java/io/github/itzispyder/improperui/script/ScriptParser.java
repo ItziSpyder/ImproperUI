@@ -20,7 +20,13 @@ public class ScriptParser {
 
     private static final String ELEMENT = "[a-zA-Z]+(\\s+[#-][a-zA-Z0-9:._-]+)*?\\s*\\{.*\\}";
     private static final String SECTION = "\\s*\\{.*\\}\\s*$";
-    public static final PropertyCache CACHE = new PropertyCache();
+    public static final Map<String, PropertyCache> CACHE = new HashMap<>();
+
+    public static PropertyCache getCache(String modId) {
+        if (!CACHE.containsKey(modId))
+            CACHE.put(modId, new PropertyCache(modId));
+        return CACHE.get(modId);
+    }
 
     private static final Map<String, Supplier<? extends Element>> tagSuppliers = new HashMap<>() {{
         this.put("checkbox", CheckBox::new);
