@@ -1,13 +1,13 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "java",
+  "package": "io.github.itzispyder.improperui.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
   ],
   "client": [
     "MixinFontManager",
-    "io.github.itzispyder.improperui.mixin.MinecraftClientMixin"
+    "MinecraftClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1
