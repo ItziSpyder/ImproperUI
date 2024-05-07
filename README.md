@@ -22,22 +22,6 @@ To add ImproperUI, you download it as a jar and then add it to gradle manually.
 I didn't want to create an online repository and I didn't want to make it a separate mod. Womp Womp.
 
 #### Step 1
-Eliminate possible duplicates in case other projects also use ImproperUI.
-```gradle
-jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}"}
-    }
-    from {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        configurations.runtimeClasspath.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
-}
-```
-
-#### Step 2
 [Download the jar](https://github.com/ItziSpyder/ImproperUI/releases/latest) and add it to your project files, as well as build.gradle as a dependency.
 ```gradle
 dependencies {
@@ -45,10 +29,10 @@ dependencies {
 }
 ```
 
-#### Step 3
+#### Step 2
 Add the downloaded jar, as a mod, to your mods folder! You have to this use this a library!
 
-#### Step 4 (Final Step)
+#### Step 3 (Final Step)
 Initialize the API. In this section, you call the init() function on ImproperUIAPI, then
 provide:
 - the `modId` your YOUR mod
