@@ -87,7 +87,7 @@ Finally, when you declare a `ImproperUIPanel` screen, register the callback to y
 
 ```java
 public void openScreen() {
-    ImprperUIPanel panel = new ImprperUIPanel();
+    ImproperUIPanel panel = new ImproperUIPanel();
     panel.registerCallback(new CustomCallback());
     // parse script and add children elements here
     // panel.addChild()
@@ -99,7 +99,7 @@ If you are running a script, provide your custom callback in the creation argume
 
 ```java
 public void openScreen() {
-    ImproperUIAPI.parseAndRunFile("testing.ui", new CustomCallback() /* and more... */);
+    ImproperUIAPI.parseAndRunFile("yourModId", "testing.ui", new CustomCallback() /* and more... */);
 }
 ```
 
@@ -138,6 +138,22 @@ slider #someId -yourModId:config.properties:testing-slider-value -someAnotherAtt
 }
 ```
 This creates a slider that sets and saves values do the config.
+
+<br>
+
+### Tags
+|             |                              |                  |                |          |                                                                              |
+| ----------- | ---------------------------- | ---------------- | -------------- | -------- | ---------------------------------------------------------------------------- |
+| Element Tag | Dynamic Hover, Select, Focus | Children Support | Config Support | Aliases  | Specific Properties: type                                                    |
+| element     | ✅                            | ✅                | ✅              | e, div   |                                                                              |
+| checkbox    | ✅                            | ❌                | ✅              |          | active:boolean                                                               |
+| radio       | ✅                            | ❌                | ✅              |          | active:boolean                                                               |
+| button      | ✅                            | ❌                | ❌              |          |                                                                              |
+| link        | ✅                            | ❌                | ❌              | a        | href:string                                                                  |
+| slider      | ❌                            | ❌                | ✅              |          | min:double max:double value:double range:double,double decimal-places:integer |
+| input       | ❌                            | ❌                | ✅              | textbox  | pattern:quote placeholder:quote                                              |
+| textfield   | ❌                            | ❌                | ✅              | textarea |                                                                              |
+
 
 <br>
 
