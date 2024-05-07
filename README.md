@@ -21,6 +21,8 @@ This screen is scripted using ImproperUI Script:
 To add ImproperUI, you download it as a jar and then add it to gradle manually.
 I didn't want to create an online repository and I didn't want to make it a separate mod. Womp Womp.
 
+[Here](https://github.com/ItziSpyder/CrosshairTarget) is an example of how ImproperUI can be used in a mod!
+
 #### Step 1
 [Download the jar](https://github.com/ItziSpyder/ImproperUI/releases/latest) and add it to your project files, as well as build.gradle as a dependency.
 ```gradle
