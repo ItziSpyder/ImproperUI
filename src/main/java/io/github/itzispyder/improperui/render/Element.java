@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.itzispyder.improperui.render.constants.*;
+import io.github.itzispyder.improperui.render.elements.Positionable;
 import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.render.math.Dimensions;
 import io.github.itzispyder.improperui.script.ScriptArgs;
@@ -478,6 +479,9 @@ public class Element {
             for (Element e : children) {
                 e.position = Position.INHERIT;
                 e.moveTo(columnX, rowY);
+
+                if (e instanceof Positionable)
+                    e.style();
 
                 Dimensions dim = e.getMarginalDimensions();
                 columnX += dim.width;

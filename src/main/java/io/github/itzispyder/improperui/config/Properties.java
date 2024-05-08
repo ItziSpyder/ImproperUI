@@ -134,6 +134,18 @@ public class Properties {
         }
 
         @Override
+        public String getQuote(int beginIndex) {
+            String q = super.getQuote(beginIndex);
+            return q.matches("\\\"+") ? "" : q;
+        }
+
+        @Override
+        public String getQuoteAndRemove(int beginIndex) {
+            String q = super.getQuoteAndRemove(beginIndex);
+            return q.matches("\\\"+") ? "" : q;
+        }
+
+        @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof Value val))
                 return false;

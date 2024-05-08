@@ -43,6 +43,7 @@ public class ScriptParser {
         this.put("input", TextBox::new);
         this.put("textlabel", Label::new);
         this.put("label", Label::new);
+        this.put("positionable", Positionable::new);
         this.put("header1", () -> new Header(1.8F));
         this.put("header2", () -> new Header(1.6F));
         this.put("header3", () -> new Header(1.4F));
