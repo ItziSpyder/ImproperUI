@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.itzispyder.improperui.config.ConfigKey;
 import io.github.itzispyder.improperui.config.PropertyCache;
 import io.github.itzispyder.improperui.render.KeyHolderElement;
+import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.MathUtils;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
@@ -61,6 +62,10 @@ public class Slider extends KeyHolderElement {
             double ratio = (double)(fillEnd - x) / (double)width;
             double value = range * ratio;
             val = MathUtils.round(value + min, decimalPlaces);
+
+            var configKey = getConfigKey();
+            if (configKey != null)
+                ScriptParser.getCache(configKey.modId).setProperty(configKey, val, true);
         }
 
         double range = max - min;

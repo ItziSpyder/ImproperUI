@@ -9,6 +9,7 @@ public class Color {
     public static final Color GRAY = new Color(0xFF808080);
     public static final Color DARK_GRAY = new Color(0xFF404040);
     public static final Color BLACK = new Color(0xFF000000);
+    public static final Color NONE = new Color(0x00000000);
     public static final Color BROWN = new Color(0xFF805100);
     public static final Color RED = new Color(0xFFFF0000);
     public static final Color ORANGE = new Color(0xFFFF8000);
@@ -55,6 +56,7 @@ public class Color {
             case "aqua" -> result = AQUA;
             case "magenta" -> result = MAGENTA;
             case "purple" -> result = PURPLE;
+            case "none" -> result = NONE;
         }
         return result;
     }

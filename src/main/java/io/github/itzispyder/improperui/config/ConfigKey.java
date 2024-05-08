@@ -27,6 +27,12 @@ public class ConfigKey {
         }
     }
 
+    public ConfigKey(String modId, String path, String key) {
+        this.modId = modId;
+        this.path = path;
+        this.key = key;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof ConfigKey configKey))

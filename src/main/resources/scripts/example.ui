@@ -39,7 +39,7 @@ div #center {
     }
 
     input {
-        placeholder: "nigger\\\\\\d"
+        placeholder: "real"
         input-mask: "\\\\\\d*"
     }
 
