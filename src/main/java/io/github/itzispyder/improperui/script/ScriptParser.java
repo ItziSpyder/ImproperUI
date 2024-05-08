@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 
 public class ScriptParser {
 
-    private static final String ELEMENT = "[a-zA-Z]+(\\s+[#-][a-zA-Z0-9:._-]+)*?\\s*\\{.*\\}";
+    private static final String ELEMENT = "[a-zA-Z0-9]+(\\s+[#-][a-zA-Z0-9:._-]+)*?\\s*\\{.*\\}";
     private static final String SECTION = "\\s*\\{.*\\}\\s*$";
     public static final Map<String, PropertyCache> CACHE = new HashMap<>();
 
@@ -41,6 +41,20 @@ public class ScriptParser {
         this.put("radio", Radio::new);
         this.put("textbox", TextBox::new);
         this.put("input", TextBox::new);
+        this.put("textlabel", Label::new);
+        this.put("label", Label::new);
+        this.put("header1", () -> new Header(1.8F));
+        this.put("header2", () -> new Header(1.6F));
+        this.put("header3", () -> new Header(1.4F));
+        this.put("header4", () -> new Header(1.2F));
+        this.put("header5", () -> new Header(1.0F));
+        this.put("header6", () -> new Header(0.8F));
+        this.put("h1", () -> new Header(1.8F));
+        this.put("h2", () -> new Header(1.6F));
+        this.put("h3", () -> new Header(1.4F));
+        this.put("h4", () -> new Header(1.2F));
+        this.put("h5", () -> new Header(1.0F));
+        this.put("h6", () -> new Header(0.8F));
     }};
 
     public static void main(String[] args) {
@@ -86,7 +100,7 @@ public class ScriptParser {
             }
             for (Element element : result) {
                 element.style();
-                element.printAll();
+                //element.printAll();
             }
         }
         catch (Exception ex) {

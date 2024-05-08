@@ -5,8 +5,6 @@ import io.github.itzispyder.improperui.config.PropertyCache;
 import io.github.itzispyder.improperui.render.KeyHolderElement;
 import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.script.ScriptParser;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
 
 public class Radio extends KeyHolderElement {
 
