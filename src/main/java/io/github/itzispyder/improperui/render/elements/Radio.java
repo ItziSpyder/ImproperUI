@@ -4,6 +4,9 @@ import io.github.itzispyder.improperui.config.ConfigKey;
 import io.github.itzispyder.improperui.config.PropertyCache;
 import io.github.itzispyder.improperui.render.KeyHolderElement;
 import io.github.itzispyder.improperui.render.math.Color;
+import io.github.itzispyder.improperui.script.ScriptParser;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
 
 public class Radio extends KeyHolderElement {
 
@@ -48,11 +51,14 @@ public class Radio extends KeyHolderElement {
             classList.remove("active");
             fillColor = borderColor;
         }
+
+        var key = getConfigKey();
+        if (key != null)
+            onSaveKey(ScriptParser.getCache(key.modId), key);
     }
 
     @Override
     public void onLeftClick(int mx, int my, boolean release) {
-        super.onLeftClick(mx, my, release);
         if (!release)
             setActive(!isActive());
     }
@@ -60,15 +66,14 @@ public class Radio extends KeyHolderElement {
     @Override
     public void onLoadKey(PropertyCache cache, ConfigKey key) {
         var property = cache.getProperty(key);
-        if (property != null)
-            setActive(property.get(0).toBool());
+        setActive(property != null && property.get(0).toBool(), true);
     }
 
     @Override
     public void style() {
         super.style();
         if (getConfigKey() == null)
-            setActive(isActive(), false);
+            setActive(isActive(), false); // fix for defaulting to active
     }
 
     @Override
