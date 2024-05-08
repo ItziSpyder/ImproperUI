@@ -10,6 +10,7 @@ import io.github.itzispyder.improperui.script.ScriptArgs;
 import io.github.itzispyder.improperui.script.ScriptReader;
 import io.github.itzispyder.improperui.script.events.KeyEvent;
 import io.github.itzispyder.improperui.script.events.MouseEvent;
+import io.github.itzispyder.improperui.util.MathUtils;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
 import net.minecraft.client.MinecraftClient;
@@ -46,7 +47,7 @@ public class Element {
     public ChildrenAlignment childrenAlignment;
     public int gridColumns;
     public Visibility visibility;
-    public BackgroundClip backgroundClip;
+    public BackgroundClip backgroundClip, childrenConstraint;
     public Identifier backgroundImage;
     public float opacity;
     public boolean draggable, scrollable, clickThrough;
@@ -89,6 +90,7 @@ public class Element {
         textShadow = false;
 
         childrenAlignment = ChildrenAlignment.NONE;
+        childrenConstraint = BackgroundClip.NONE;
         gridColumns = 1;
         visibility = Visibility.VISIBLE;
         backgroundClip = BackgroundClip.NONE;
@@ -173,6 +175,12 @@ public class Element {
 
         registerProperty("children-align", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
         registerProperty("child-align", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
+        registerProperty("children-constraint", args -> childrenConstraint = args.get(0).toEnum(BackgroundClip.class));
+        registerProperty("children-bounds", args -> childrenConstraint = args.get(0).toEnum(BackgroundClip.class));
+        registerProperty("children-bound", args -> childrenConstraint = args.get(0).toEnum(BackgroundClip.class));
+        registerProperty("child-constraint", args -> childrenConstraint = args.get(0).toEnum(BackgroundClip.class));
+        registerProperty("child-bounds", args -> childrenConstraint = args.get(0).toEnum(BackgroundClip.class));
+        registerProperty("child-bound", args -> childrenConstraint = args.get(0).toEnum(BackgroundClip.class));
         registerProperty("display", args -> childrenAlignment = args.get(0).toEnum(ChildrenAlignment.class));
         registerProperty("grid-columns", args -> gridColumns = args.get(0).toInt());
         registerProperty("visibility", args -> visibility = args.get(0).toEnum(Visibility.class));
@@ -345,6 +353,36 @@ public class Element {
         });
     }
 
+    public void boundIn(Dimensions dim) {
+        var self = getMarginalDimensions();
+        int x = MathUtils.clamp(self.x, dim.x, dim.widthX - self.width);
+        int y = MathUtils.clamp(self.y, dim.y, dim.heightY - self.height);
+        x -= self.x;
+        y -= self.y;
+        move(x, y);
+    }
+
+    public void boundInConstraints() {
+        var constraint = getConstraint();
+        if (constraint != null)
+            boundIn(constraint);
+    }
+
+    public Dimensions getConstraint() {
+        if (parent == null)
+            return null;
+
+        Dimensions dim;
+        switch (parent.childrenConstraint) {
+            case PADDING -> dim = parent.getPaddedDimensions();
+            case SELF -> dim = parent.getDimensions();
+            case BORDER -> dim = parent.getBorderedDimensions();
+            case MARGIN ->  dim = parent.getMarginalDimensions();
+            default -> dim = null;
+        }
+        return dim;
+    }
+
     public void addChild(Element child) {
         if (child == null || child == this || child.parent != null || children.contains(child))
             return;
@@ -451,6 +489,7 @@ public class Element {
                 }
             }
         }
+        children.forEach(Element::boundInConstraints);
     }
 
     // built-in
@@ -751,6 +790,7 @@ public class Element {
 
         arr = new JsonArray();
         arr.add(stringify(childrenAlignment));
+        arr.add(stringify(childrenConstraint));
         arr.add(gridColumns);
         o.add("child-align", arr);
 

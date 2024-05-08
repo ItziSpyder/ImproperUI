@@ -58,6 +58,7 @@ public class ImproperUIPanel extends Screen {
             int dx = mx - cursor[0];
             int dy = my - cursor[1];
             selected.move(dx, dy);
+            selected.boundInConstraints();
             cursor[0] = mx;
             cursor[1] = my;
         }
