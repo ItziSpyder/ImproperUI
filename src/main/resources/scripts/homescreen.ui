@@ -68,6 +68,8 @@ div #display {
             padding-left: 0
             padding-right: 0
 
+            on-click: openDiscord
+
             hovered => { padding: 3; border-thickness: 0; border-radius: 2; shadow-distance: 2; }
         }
         button #github {
@@ -78,6 +80,8 @@ div #display {
             width: 25%
             padding-left: 0
             padding-right: 0
+
+            on-click: openGithub
 
             hovered => { padding: 3; border-thickness: 0; border-radius: 2; shadow-distance: 2; }
         }
@@ -90,6 +94,8 @@ div #display {
             padding-left: 0
             padding-right: 0
 
+            on-click: openModrinth
+
             hovered => { padding: 3; border-thickness: 0; border-radius: 2; shadow-distance: 2; }
         }
         button #wiki {
@@ -100,6 +106,8 @@ div #display {
             width: 25%
             padding-left: 0
             padding-right: 0
+
+            on-click: openWiki
 
             hovered => { padding: 3; border-thickness: 0; border-radius: 2; shadow-distance: 2; }
         }

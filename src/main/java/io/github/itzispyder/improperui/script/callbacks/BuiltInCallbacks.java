@@ -5,9 +5,34 @@ import io.github.itzispyder.improperui.script.CallbackListener;
 import io.github.itzispyder.improperui.script.events.KeyEvent;
 import io.github.itzispyder.improperui.script.events.MouseEvent;
 import io.github.itzispyder.improperui.util.ChatUtils;
+import net.minecraft.util.Util;
 import org.lwjgl.glfw.GLFW;
 
 public class BuiltInCallbacks implements CallbackListener {
+
+    @CallbackHandler
+    public void openGithub(MouseEvent e) {
+        if (e.input.isDown())
+            Util.getOperatingSystem().open("https://github.com/itzispyder/improperui");
+    }
+
+    @CallbackHandler
+    public void openModrinth(MouseEvent e) {
+        if (e.input.isDown())
+            Util.getOperatingSystem().open("https://modrinth.com/mod/improperui");
+    }
+
+    @CallbackHandler
+    public void openDiscord(MouseEvent e) {
+        if (e.input.isDown())
+            Util.getOperatingSystem().open("https://discord.gg/tMaShNzNtP");
+    }
+
+    @CallbackHandler
+    public void openWiki(MouseEvent e) {
+        if (e.input.isDown())
+            Util.getOperatingSystem().open("https://github.com/itzispyder/improperui/wiki");
+    }
 
     @CallbackHandler
     public void sendHelloWorld(MouseEvent e) {
