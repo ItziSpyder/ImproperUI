@@ -64,7 +64,7 @@ div #display {
             background-color: #9775a6
             border-radius: 0
             margin: 0
-            width: 25%
+            width: 20%
             padding-left: 0
             padding-right: 0
 
@@ -77,7 +77,7 @@ div #display {
             background-color: #9775a6
             border-radius: 0
             margin: 0
-            width: 25%
+            width: 20%
             padding-left: 0
             padding-right: 0
 
@@ -90,7 +90,7 @@ div #display {
             background-color: #9775a6
             border-radius: 0
             margin: 0
-            width: 25%
+            width: 20%
             padding-left: 0
             padding-right: 0
 
@@ -103,11 +103,24 @@ div #display {
             background-color: #9775a6
             border-radius: 0
             margin: 0
-            width: 25%
+            width: 20%
             padding-left: 0
             padding-right: 0
 
             on-click: openWiki
+
+            hovered => { padding: 3; border-thickness: 0; border-radius: 2; shadow-distance: 2; }
+        }
+        button #wiki {
+            inner-text: "Example"
+            background-color: #9775a6
+            border-radius: 0
+            margin: 0
+            width: 20%
+            padding-left: 0
+            padding-right: 0
+
+            on-click: openExampleScreen
 
             hovered => { padding: 3; border-thickness: 0; border-radius: 2; shadow-distance: 2; }
         }

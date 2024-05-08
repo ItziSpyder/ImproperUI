@@ -1,5 +1,6 @@
 package io.github.itzispyder.improperui.script.callbacks;
 
+import io.github.itzispyder.improperui.ImproperUIAPI;
 import io.github.itzispyder.improperui.script.CallbackHandler;
 import io.github.itzispyder.improperui.script.CallbackListener;
 import io.github.itzispyder.improperui.script.events.KeyEvent;
@@ -32,6 +33,12 @@ public class BuiltInCallbacks implements CallbackListener {
     public void openWiki(MouseEvent e) {
         if (e.input.isDown())
             Util.getOperatingSystem().open("https://github.com/itzispyder/improperui/wiki");
+    }
+
+    @CallbackHandler
+    public void openExampleScreen(MouseEvent e) {
+        if (e.input.isDown())
+            ImproperUIAPI.parseAndRunFile("improperui", "example.ui");
     }
 
     @CallbackHandler

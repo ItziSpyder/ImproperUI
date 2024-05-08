@@ -26,24 +26,24 @@ div #center {
         grid-columns: 100
         height: 15
 
-        radio {}
-        radio {}
-        radio {}
-        radio {}
-        radio {}
-        radio {}
+        radio -config.properties:radio {}
+        radio -config.properties:radio1 {}
+        radio -config.properties:radio2 {}
+        radio -config.properties:radio3 {}
+        radio -config.properties:radio4 {}
+        radio -config.properties:radio5 {}
     }
 
-    checkbox {
+    checkbox -config.properties:testing-checkbox1 {
         active: true
     }
 
-    input {
+    input -config.properties:testing-input {
         placeholder: "real"
         input-mask: "\\\\\\d*"
     }
 
-    textarea {
+    textarea -config.properties:testing-textarea {
         size: 100
     }
 }
