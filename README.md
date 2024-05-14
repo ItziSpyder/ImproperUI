@@ -19,20 +19,13 @@ This screen is scripted using ImproperUI Script:
 
 ### Recent Changes
 ```yml
-Version: 0.0.2-BETA
+Version: 0.0.3-BETA
 
 Added:
-  - property child-constraint: [padding, border, ...]
-  - position saving (use `positionable` tag)
-  - full transparent color: NONE
-  - tag label
-  - tag h1, h2, h3, h4, h5, h6
+  - in-game bind to open up home page (right shift) # you can edit this in controls
 
 Patches:
-  - fix slider hitbox
-
-Tweaks:
-  - remake home page
+  - attempted to fix script blank or frozen screen due to failed initialization
 ```
 
 ### Adding ImproperUI to your Project
@@ -111,7 +104,7 @@ public void openScreen() {
     panel.registerCallback(new CustomCallback());
     // parse script and add children elements here
     // panel.addChild()
-    MinecraftClient.getInstance().setScreen(panel);
+    panel.open();
 }
 ```
 

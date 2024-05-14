@@ -5,19 +5,21 @@ import io.github.itzispyder.improperui.render.Element;
 import io.github.itzispyder.improperui.render.ImproperUIPanel;
 import io.github.itzispyder.improperui.script.CallbackListener;
 import io.github.itzispyder.improperui.script.ScriptParser;
-import io.github.itzispyder.improperui.util.FileValidationUtils;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.client.MinecraftClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.HashSet;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public class ImproperUIAPI {
 
-    private static boolean initialized = false;
-    private static final Set<String> paths = new HashSet<>();
+    public static final Logger LOGGER = LoggerFactory.getLogger("ImproperUIAPI");
+    private static final Map<String, InitContext> CONTEXTS = new HashMap<>();
 
     /**
      * Example: ImproperUI.init("improperui", ImproperUI.class, "scripts/example.ui");
@@ -26,60 +28,30 @@ public class ImproperUIAPI {
      * @param scriptPaths Target script files
      */
     public static void init(String modId, Class<? extends ModInitializer> initializer, String... scriptPaths) {
-        if (initialized)
-            return;
-        ImproperUIAPI.initialized = true;
-        ImproperUIAPI.paths.clear();
-        Paths.init();
+        InitContext context = CONTEXTS.get(modId);
 
-        var loader = initializer.getClassLoader();
-        for (String path : scriptPaths) {
-            copyResource(modId, loader, path);
+        if (context == null) {
+            context = new InitContext(modId, initializer, scriptPaths);
+            CONTEXTS.put(modId, context);
         }
+        context.init();
     }
 
-    public static void reload(String modId, Class<? extends ModInitializer> initializer, String... scriptPaths) {
-        reInit(modId, initializer, scriptPaths);
+    public static void reload() {
+        CONTEXTS.values().forEach(InitContext::reload);
     }
 
-    public static void reInit(String modId, Class<? extends ModInitializer> initializer, String... scriptPaths) {
-        initialized = false;
-        init(modId, initializer, scriptPaths);
+    public static List<InitContext> collectContext() {
+        return new ArrayList<>(CONTEXTS.values());
     }
 
-    private static void copyResource(String modId, ClassLoader loader, String path) {
-        try {
-            String name = path.trim().replaceAll(".*/", "");
-            if (paths.contains(name))
-                return;
-
-            InputStream is = loader.getResourceAsStream(path);
-
-            if (is == null)
-                throw new IllegalArgumentException("resource not found!");
-
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader br = new BufferedReader(isr);
-            String read = String.join("\n", br.lines().toList());
-            br.close();
-            isr.close();
-            is.close();
-
-            File file = new File(Paths.getScripts(modId) + name);
-            FileValidationUtils.validate(file);
-
-            FileWriter fw = new FileWriter(file);
-            BufferedWriter bw = new BufferedWriter(fw);
-            bw.write(read);
-            bw.close();
-            fw.close();
-
-            paths.add(name);
-        }
-        catch (Exception ex) {
-            System.err.printf("Error copying resource '%s': %s\n", path, ex.getMessage());
-        }
+    public static InitContext getContext(String modId) {
+        return CONTEXTS.get(modId);
     }
+
+
+
+    // parse helper methods
 
     public static List<Element> parse(String script) {
         return ScriptParser.parse(script);

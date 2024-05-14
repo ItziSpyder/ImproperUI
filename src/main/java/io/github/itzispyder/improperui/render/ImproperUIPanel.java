@@ -7,6 +7,7 @@ import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.ChatUtils;
 import io.github.itzispyder.improperui.util.RenderUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -274,5 +275,11 @@ public class ImproperUIPanel extends Screen {
             if (child.classList.contains(classAttribute))
                 return child;
         return null;
+    }
+
+    public void open() {
+        var mc = MinecraftClient.getInstance();
+        if (mc.currentScreen != this)
+            mc.setScreen(this);
     }
 }
