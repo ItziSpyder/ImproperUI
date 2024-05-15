@@ -6,7 +6,6 @@ import io.github.itzispyder.improperui.render.ImproperUIPanel;
 import io.github.itzispyder.improperui.script.CallbackListener;
 import io.github.itzispyder.improperui.script.ScriptParser;
 import net.fabricmc.api.ModInitializer;
-import net.minecraft.client.MinecraftClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,23 +60,8 @@ public class ImproperUIAPI {
         return ScriptParser.parseFile(file);
     }
 
-    public static void parseAndRunScript(String script) {
-        ScriptParser.run(script);
-    }
-
-    /**
-     * Parses and runs the script from the path provided
-     * @param modId Multiple mods may use ImproperUI at the same time with their own respective scripts, specify the mod ID!
-     * @param fileName The file NAME, NOT THE FILE PATH
-     */
-    public static void parseAndRunFile(String modId, String fileName) {
-        ScriptParser.run(new File(Paths.getScripts(modId) + fileName));
-    }
-
     public static void parseAndRunScript(String script, CallbackListener... callbackListeners) {
-        ImproperUIPanel panel = new ImproperUIPanel(script, callbackListeners);
-        MinecraftClient client = MinecraftClient.getInstance();
-        client.execute(() -> client.setScreen(panel));
+        new ImproperUIPanel(script, callbackListeners).open();
     }
 
     /**
@@ -88,8 +72,6 @@ public class ImproperUIAPI {
      */
     public static void parseAndRunFile(String modId, String fileName, CallbackListener... callbackListeners) {
         File script = new File(Paths.getScripts(modId) + fileName);
-        ImproperUIPanel panel = new ImproperUIPanel(script, callbackListeners);
-        MinecraftClient client = MinecraftClient.getInstance();
-        client.execute(() -> client.setScreen(panel));
+        new ImproperUIPanel(script, callbackListeners).open();
     }
 }

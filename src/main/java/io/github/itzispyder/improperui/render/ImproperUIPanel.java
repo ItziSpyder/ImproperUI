@@ -25,6 +25,9 @@ public class ImproperUIPanel extends Screen {
     private final List<Element> children;
     private final List<CallbackListener> callbackListeners;
 
+    private File uiScriptAsFile;
+    private String uiScriptAsString;
+
     public ImproperUIPanel() {
         super(Text.of("Custom Scripted Panel Screen"));
         children = new ArrayList<>();
@@ -42,10 +45,12 @@ public class ImproperUIPanel extends Screen {
 
     public ImproperUIPanel(String uiScript, CallbackListener... callbackListeners) {
         this(ScriptParser.parse(uiScript), callbackListeners);
+        uiScriptAsString = uiScript;
     }
 
     public ImproperUIPanel(File uiScript, CallbackListener... callbackListeners) {
         this(ScriptParser.parseFile(uiScript), callbackListeners);
+        uiScriptAsFile = uiScript;
     }
 
     @Override
@@ -179,6 +184,14 @@ public class ImproperUIPanel extends Screen {
         children.forEach(Element::onTick);
     }
 
+    @Override
+    public void resize(MinecraftClient client, int width, int height) {
+        if (uiScriptAsFile != null)
+            new ImproperUIPanel(uiScriptAsFile, callbackListeners.toArray(CallbackListener[]::new)).open();
+        else if (uiScriptAsString != null)
+            new ImproperUIPanel(uiScriptAsString, callbackListeners.toArray(CallbackListener[]::new)).open();
+    }
+
     public void addChild(Element child) {
         if (child == null || child.parentPanel != null || child.parent != null || children.contains(child))
             return;
@@ -280,6 +293,6 @@ public class ImproperUIPanel extends Screen {
     public void open() {
         var mc = MinecraftClient.getInstance();
         if (mc.currentScreen != this)
-            mc.setScreen(this);
+            mc.execute(() -> mc.setScreen(this));
     }
 }

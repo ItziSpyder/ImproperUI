@@ -123,16 +123,16 @@ public class Color {
         return new Color(a, r, g, b);
     }
 
-    public void withRed(int r) {
-        new Color(a, r, g, b);
+    public Color withRed(int r) {
+        return new Color(a, r, g, b);
     }
 
-    public void withBlue(int g) {
-        new Color(a, r, g, b);
+    public Color withBlue(int g) {
+        return new Color(a, r, g, b);
     }
 
-    public void withGreen(int b) {
-        new Color(a, r, g, b);
+    public Color withGreen(int b) {
+        return new Color(a, r, g, b);
     }
 
     public int getAlpha() {

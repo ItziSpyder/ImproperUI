@@ -2,12 +2,9 @@ package io.github.itzispyder.improperui.script;
 
 import io.github.itzispyder.improperui.config.PropertyCache;
 import io.github.itzispyder.improperui.render.Element;
-import io.github.itzispyder.improperui.render.ImproperUIPanel;
 import io.github.itzispyder.improperui.render.elements.*;
-import io.github.itzispyder.improperui.script.callbacks.BuiltInCallbacks;
 import io.github.itzispyder.improperui.util.ChatUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
-import net.minecraft.client.MinecraftClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -58,31 +55,7 @@ public class ScriptParser {
         this.put("h6", () -> new Header(0.8F));
     }};
 
-    public static void main(String[] args) {
-        parseFile(new File("src/main/resources/assets/improperui/scripts/skibidi.ui"));
-    }
 
-    public static void run(File file) {
-        var elements = parseFile(file);
-        var mc = MinecraftClient.getInstance();
-
-        ImproperUIPanel panel = new ImproperUIPanel();
-        panel.registerCallback(new BuiltInCallbacks());
-        elements.forEach(panel::addChild);
-
-        mc.execute(() -> mc.setScreen(panel));
-    }
-
-    public static void run(String script) {
-        var elements = parse(script);
-        var mc = MinecraftClient.getInstance();
-
-        ImproperUIPanel panel = new ImproperUIPanel();
-        panel.registerCallback(new BuiltInCallbacks());
-        elements.forEach(panel::addChild);
-
-        mc.execute(() -> mc.setScreen(panel));
-    }
 
     public static List<Element> parseFile(File file) {
         if (file == null || !file.exists())

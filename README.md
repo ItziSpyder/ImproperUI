@@ -19,13 +19,10 @@ This screen is scripted using ImproperUI Script:
 
 ### Recent Changes
 ```yml
-Version: 0.0.3-BETA
-
-Added:
-  - in-game bind to open up home page (right shift) # you can edit this in controls
+Version: 0.0.4-BETA
 
 Patches:
-  - attempted to fix script blank or frozen screen due to failed initialization
+  - attempted to fix screen resize issues
 ```
 
 ### Adding ImproperUI to your Project
@@ -125,15 +122,14 @@ Helper Methods:
   - ImproperUIPanel.collectOrdered() // a sorted list based on z-index, of all elements and widgets including their children
   - ImproperUIPanel.collectById() // a list of elements with specified ID
   - ImproperUIPanel.collectByClassAttribute() // a list of elements with specified class attribute
-  - ImproperUIPanel.collectById() // first element with specified ID
-  - ImproperUIPanel.collectByClassAttribute() // first element with specified class attribute
+  - ImproperUIPanel.collectFirstById() // first element with specified ID
+  - ImproperUIPanel.collectFirstByClassAttribute() // first element with specified class attribute
 
 API:
   - ImproperUIAPI.parse() // parses a script then returns all parsed result elements
   - ImproperUIAPI.parseAndRunFile() // parses a registered script file NAME (NOT PATH) from init() and opens the screen with the elements 
   - ImproperUIAPI.parseAndRunScript() // parses a registered script from init() and opens the screen with the elements
   - ImproperUIAPI.reload() // reloads the API
-  - ImproperUIAPI.reInit() // re-init the API with possibly a different Mod ID
 ```
 
 <br>
