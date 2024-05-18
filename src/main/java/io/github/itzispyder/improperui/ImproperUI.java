@@ -1,5 +1,6 @@
 package io.github.itzispyder.improperui;
 
+import io.github.itzispyder.improperui.script.callbacks.BuiltInCallbacks;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -25,7 +26,7 @@ public class ImproperUI implements ModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (BIND.wasPressed()) {
-                ImproperUIAPI.parseAndRunFile("improperui", "homescreen.ui");
+                ImproperUIAPI.parseAndRunFile("improperui", "homescreen.ui", new BuiltInCallbacks());
             }
         });
     }

@@ -19,10 +19,10 @@ This screen is scripted using ImproperUI Script:
 
 ### Recent Changes
 ```yml
-Version: 0.0.4-BETA
+Version: 0.0.5-BETA
 
 Patches:
-  - attempted to fix screen resize issues
+  - working on it to be compatible for all versions of minecraft
 ```
 
 ### Adding ImproperUI to your Project
