@@ -20,8 +20,8 @@ public class ImproperUI implements ModInitializer {
     @Override
     public void onInitialize() {
         ImproperUIAPI.init("improperui", ImproperUI.class,
-                "scripts/homescreen.ui",
-                "scripts/example.ui"
+                "assets/improperui/improperui/homescreen.ui",
+                "assets/improperui/improperui/example.ui"
         );
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
