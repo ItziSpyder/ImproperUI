@@ -48,6 +48,7 @@ provide:
 - the `modId` your YOUR mod
 - the `main class mod initializer` of YOUR mod
 - then finally a list of script paths inside the `src/main/resources/` folder of YOUR mod.
+- by convention, you should create your scripts inside of `src/main/resources/assets/YOURMODID/improperui/` folder
 
 ```java
 public class ImproperUI implements ModInitializer {
@@ -55,8 +56,20 @@ public class ImproperUI implements ModInitializer {
     @Override
     public void onInitialize() {
         ImproperUIAPI.init("improperui", ImproperUI.class,
-                "scripts/what.ui",
-                "scripts/screen.ui"
+                "assets/improperui/improperui/what.ui",
+                "assets/improperui/improperui/screen.ui"
+        );
+    }
+}
+```
+```java
+public class YourModInitializer implements ModInitializer {
+
+    @Override
+    public void onInitialize() {
+        ImproperUIAPI.init("yourModId", YourModInitializer.class,
+                "assets/yourModId/improperui/yourscreen1.ui",
+                "assets/yourModId/improperui/yourscreen2.ui"
         );
     }
 }
