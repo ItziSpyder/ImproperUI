@@ -1,5 +1,6 @@
 package io.github.itzispyder.improperui;
 
+import io.github.itzispyder.improperui.config.ConfigReader;
 import io.github.itzispyder.improperui.config.Paths;
 import io.github.itzispyder.improperui.render.Element;
 import io.github.itzispyder.improperui.render.ImproperUIPanel;
@@ -46,6 +47,10 @@ public class ImproperUIAPI {
 
     public static InitContext getContext(String modId) {
         return CONTEXTS.get(modId);
+    }
+
+    public static ConfigReader getConfigReader(String modId, String configFile) {
+        return new ConfigReader(modId, configFile);
     }
 
 

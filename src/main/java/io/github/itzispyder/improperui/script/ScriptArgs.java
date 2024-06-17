@@ -94,27 +94,27 @@ public class ScriptArgs {
         }
 
         public int toInt() {
-            return Integer.parseInt(arg.replaceAll("[^0-9-+]", ""));
+            return (int) toDouble();
         }
 
         public long toLong() {
-            return Long.parseLong(arg.replaceAll("[^0-9-+]", ""));
+            return (long) toDouble();
         }
 
         public byte toByte() {
-            return Byte.parseByte(arg.replaceAll("[^0-9-+]", ""));
+            return (byte) toDouble();
         }
 
         public short toShort() {
-            return Short.parseShort(arg.replaceAll("[^0-9-+]", ""));
+            return (short) toDouble();
+        }
+
+        public float toFloat() {
+            return (float) toDouble();
         }
 
         public double toDouble() {
             return Double.parseDouble(arg.replaceAll("[^0-9-+e.]", ""));
-        }
-
-        public float toFloat() {
-            return Float.parseFloat(arg.replaceAll("[^0-9-+e.]", ""));
         }
 
         public boolean toBool() {
