@@ -18,8 +18,8 @@ public abstract class MixinMinecraftClient {
     @Shadow @Final private FontManager fontManager;
     @Shadow @Final public static Identifier UNICODE_FONT_ID;
 
-    @Inject(method = "onFontOptionsChanged", at = @At("TAIL"))
-    public void initFont(CallbackInfo ci) {
+    @Inject(method = "initFont", at = @At("TAIL"))
+    public void initFont(boolean forcesUnicode, CallbackInfo ci) {
         var fonts = ((FontManagerAccessor)this.fontManager);
         ImproperUIClient.getInstance().codeRenderer = fonts.createRenderer(UNICODE_FONT_ID);
     }
