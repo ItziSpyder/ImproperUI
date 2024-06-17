@@ -19,10 +19,14 @@ This screen is scripted using ImproperUI Script:
 
 ### Recent Changes
 ```yml
-Version: 0.0.5-BETA
+Version: 0.0.6-BETA
+
+Added:
+  - added ConfigReader
+  - added ImproperUIAPI.getConfigReader()
 
 Patches:
-  - working on it to be compatible for all versions of minecraft
+  - fixed config integer args not parsing properly
 ```
 
 ### Adding ImproperUI to your Project
