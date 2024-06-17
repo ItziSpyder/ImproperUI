@@ -24,13 +24,14 @@ public final class RenderUtils {
     // fill
 
     public static void fillRect(DrawContext context, int x, int y, int w, int h, int color) {
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
 
-        buf.vertex(mat, (float)x, (float)y, 0).color(color);
-        buf.vertex(mat, (float)(x + w), (float)y, 0).color(color);
-        buf.vertex(mat, (float)(x + w), (float)(y + h), 0).color(color);
-        buf.vertex(mat, (float)x, (float)(y + h), 0).color(color);
+        buf.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        buf.vertex(mat, (float)x, (float)y, 0).color(color).next();
+        buf.vertex(mat, (float)(x + w), (float)y, 0).color(color).next();
+        buf.vertex(mat, (float)(x + w), (float)(y + h), 0).color(color).next();
+        buf.vertex(mat, (float)x, (float)(y + h), 0).color(color).next();
 
         beginRendering();
         BufferRenderer.drawWithGlobalProgram(buf.end());
@@ -38,16 +39,17 @@ public final class RenderUtils {
     }
 
     public static void fillArc(DrawContext context, int cX, int cY, int radius, int start, int end, int color) {
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
 
-        buf.vertex(mat, (float)cX, (float)cY, 0).color(color);
+        buf.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+        buf.vertex(mat, (float)cX, (float)cY, 0).color(color).next();
 
         for (int i = start - 90; i <= end - 90; i ++) {
             double angle = Math.toRadians(i);
             float x = (float)(Math.cos(angle) * radius) + cX;
             float y = (float)(Math.sin(angle) * radius) + cY;
-            buf.vertex(mat, x, y, 0).color(color);
+            buf.vertex(mat, x, y, 0).color(color).next();
         }
 
         beginRendering();
@@ -60,8 +62,10 @@ public final class RenderUtils {
     }
 
     public static void fillAnnulusArc(DrawContext context, int cx, int cy, int radius, int start, int end, int thickness, int color) {
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
+
+        buf.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
 
         for (int i = start - 90; i <= end - 90; i ++) {
             float angle = (float)Math.toRadians(i);
@@ -71,8 +75,8 @@ public final class RenderUtils {
             float y1 = cy + sin * radius;
             float x2 = cx + cos * (radius + thickness);
             float y2 = cy + sin * (radius + thickness);
-            buf.vertex(mat, x1, y1, 0).color(color);
-            buf.vertex(mat, x2, y2, 0).color(color);
+            buf.vertex(mat, x1, y1, 0).color(color).next();
+            buf.vertex(mat, x2, y2, 0).color(color).next();
         }
 
         beginRendering();
@@ -87,10 +91,11 @@ public final class RenderUtils {
     public static void fillRoundRect(DrawContext context, int x, int y, int w, int h, int r, int color) {
         r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
 
-        buf.vertex(mat, x + w / 2F, y + h / 2F, 0).color(color);
+        buf.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+        buf.vertex(mat, x + w / 2F, y + h / 2F, 0).color(color).next();
 
         int[][] corners = {
                 { x + w - r, y + r },
@@ -106,11 +111,11 @@ public final class RenderUtils {
                 float angle = (float)Math.toRadians(i);
                 float rx = corners[corner][0] + (float)(Math.cos(angle) * r);
                 float ry = corners[corner][1] + (float)(Math.sin(angle) * r);
-                buf.vertex(mat, rx, ry, 0).color(color);
+                buf.vertex(mat, rx, ry, 0).color(color).next();
             }
         }
 
-        buf.vertex(mat, corners[0][0], y, 0).color(color); // connect last to first vertex
+        buf.vertex(mat, corners[0][0], y, 0).color(color).next(); // connect last to first vertex
 
         beginRendering();
         drawBuffer(buf);
@@ -120,8 +125,10 @@ public final class RenderUtils {
     public static void fillRoundShadow(DrawContext context, int x, int y, int w, int h, int r, int thickness, int innerColor, int outerColor) {
         r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
+
+        buf.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
 
         int[][] corners = {
                 { x + w - r, y + r },
@@ -139,13 +146,13 @@ public final class RenderUtils {
                 float ry1 = corners[corner][1] + (float)(Math.sin(angle) * r);
                 float rx2 = corners[corner][0] + (float)(Math.cos(angle) * (r + thickness));
                 float ry2 = corners[corner][1] + (float)(Math.sin(angle) * (r + thickness));
-                buf.vertex(mat, rx1, ry1, 0).color(innerColor);
-                buf.vertex(mat, rx2, ry2, 0).color(outerColor);
+                buf.vertex(mat, rx1, ry1, 0).color(innerColor).next();
+                buf.vertex(mat, rx2, ry2, 0).color(outerColor).next();
             }
         }
 
-        buf.vertex(mat, corners[0][0], y, 0).color(innerColor); // connect last to first vertex
-        buf.vertex(mat, corners[0][0], y - thickness, 0).color(outerColor); // connect last to first vertex
+        buf.vertex(mat, corners[0][0], y, 0).color(innerColor).next(); // connect last to first vertex
+        buf.vertex(mat, corners[0][0], y - thickness, 0).color(outerColor).next(); // connect last to first vertex
 
         beginRendering();
         drawBuffer(buf);
@@ -155,10 +162,11 @@ public final class RenderUtils {
     public static void fillRoundTabTop(DrawContext context, int x, int y, int w, int h, int r, int color) {
         r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
 
-        buf.vertex(mat, x + w / 2F, y + h / 2F, 0).color(color);
+        buf.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+        buf.vertex(mat, x + w / 2F, y + h / 2F, 0).color(color).next();
 
         int[][] corners = {
                 { x + r, y + r },
@@ -172,13 +180,13 @@ public final class RenderUtils {
                 float angle = (float)Math.toRadians(i);
                 float rx = corners[corner][0] + (float)(Math.cos(angle) * r);
                 float ry = corners[corner][1] + (float)(Math.sin(angle) * r);
-                buf.vertex(mat, rx, ry, 0).color(color);
+                buf.vertex(mat, rx, ry, 0).color(color).next();
             }
         }
 
-        buf.vertex(mat, x + w, y + h, 0).color(color);
-        buf.vertex(mat, x, y + h, 0).color(color);
-        buf.vertex(mat, x, corners[0][1], 0).color(color); // connect last to first vertex
+        buf.vertex(mat, x + w, y + h, 0).color(color).next();
+        buf.vertex(mat, x, y + h, 0).color(color).next();
+        buf.vertex(mat, x, corners[0][1], 0).color(color).next(); // connect last to first vertex
 
         beginRendering();
         drawBuffer(buf);
@@ -188,10 +196,11 @@ public final class RenderUtils {
     public static void fillRoundTabBottom(DrawContext context, int x, int y, int w, int h, int r, int color) {
         r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
 
-        buf.vertex(mat, x + w / 2F, y + h / 2F, 0).color(color);
+        buf.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+        buf.vertex(mat, x + w / 2F, y + h / 2F, 0).color(color).next();
 
         int[][] corners = {
                 { x + w - r, y + h - r},
@@ -205,13 +214,13 @@ public final class RenderUtils {
                 float angle = (float)Math.toRadians(i);
                 float rx = corners[corner][0] + (float)(Math.cos(angle) * r);
                 float ry = corners[corner][1] + (float)(Math.sin(angle) * r);
-                buf.vertex(mat, rx, ry, 0).color(color);
+                buf.vertex(mat, rx, ry, 0).color(color).next();
             }
         }
 
-        buf.vertex(mat, x, y, 0).color(color);
-        buf.vertex(mat, x + w, y, 0).color(color);
-        buf.vertex(mat, x + w, corners[0][1], 0).color(color); // connect last to first vertex
+        buf.vertex(mat, x, y, 0).color(color).next();
+        buf.vertex(mat, x + w, y, 0).color(color).next();
+        buf.vertex(mat, x + w, corners[0][1], 0).color(color).next(); // connect last to first vertex
 
         beginRendering();
         drawBuffer(buf);
@@ -225,7 +234,7 @@ public final class RenderUtils {
     public static void fillRoundVertLine(DrawContext context, int x, int y, int length, int thickness, int color) {
         fillRoundRect(context, x, y, thickness, length, thickness / 2, color);
     }
-    
+
     // draw
 
     public static void drawRect(DrawContext context, int x, int y, int w, int h, int color) {
@@ -251,11 +260,12 @@ public final class RenderUtils {
     }
 
     public static void drawLine(DrawContext context, int x1, int y1, int x2, int y2, int color) {
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
 
-        buf.vertex(mat, (float)x1, (float)y1, 0).color(color);
-        buf.vertex(mat, (float)x2, (float)y2, 0).color(color);
+        buf.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+        buf.vertex(mat, (float)x1, (float)y1, 0).color(color).next();
+        buf.vertex(mat, (float)x2, (float)y2, 0).color(color).next();
 
         beginRendering();
         drawBuffer(buf);
@@ -263,14 +273,16 @@ public final class RenderUtils {
     }
 
     public static void drawArc(DrawContext context, int cX, int cY, int radius, int start, int end, int color) {
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
+
+        buf.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
 
         for (int i = start - 90; i <= end - 90; i++) {
             double angle = Math.toRadians(i);
             float x = (float)(Math.cos(angle) * radius) + cX;
             float y = (float)(Math.sin(angle) * radius) + cY;
-            buf.vertex(mat, x, y, 0).color(color);
+            buf.vertex(mat, x, y, 0).color(color).next();
         }
 
         beginRendering();
@@ -285,8 +297,10 @@ public final class RenderUtils {
     public static void drawRoundRect(DrawContext context, int x, int y, int w, int h, int r, int color) {
         r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
+
+        buf.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
 
         int[][] corners = {
                 { x + w - r, y + r },
@@ -302,11 +316,11 @@ public final class RenderUtils {
                 float angle = (float)Math.toRadians(i);
                 float rx = corners[corner][0] + (float)(Math.cos(angle) * r);
                 float ry = corners[corner][1] + (float)(Math.sin(angle) * r);
-                buf.vertex(mat, rx, ry, 0).color(color);
+                buf.vertex(mat, rx, ry, 0).color(color).next();
             }
         }
 
-        buf.vertex(mat, corners[0][0], y, 0).color(color); // connect last to first vertex
+        buf.vertex(mat, corners[0][0], y, 0).color(color).next(); // connect last to first vertex
 
         beginRendering();
         drawBuffer(buf);
@@ -431,13 +445,14 @@ public final class RenderUtils {
     // misc
 
     public static void drawTexture(DrawContext context, Identifier texture, int x, int y, int w, int h) {
-        BufferBuilder buf = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+        BufferBuilder buf = Tessellator.getInstance().getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
 
-        buf.vertex(mat, x, y, 0).texture(0, 0);
-        buf.vertex(mat, x, y + h, 0).texture(0, 1);
-        buf.vertex(mat, x + w, y + h, 0).texture(1, 1);
-        buf.vertex(mat, x + w, y, 0).texture(1, 0);
+        buf.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+        buf.vertex(mat, x, y, 0).texture(0, 0).next();
+        buf.vertex(mat, x, y + h, 0).texture(0, 1).next();
+        buf.vertex(mat, x + w, y + h, 0).texture(1, 1).next();
+        buf.vertex(mat, x + w, y, 0).texture(1, 0).next();
 
         disableCull();
         setShader(GameRenderer::getPositionTexProgram);
@@ -451,10 +466,11 @@ public final class RenderUtils {
     public static void drawRoundTexture(DrawContext context, Identifier texture, int x, int y, int w, int h, int r) {
         r = MathUtils.clamp(r, 0, Math.min(w, h) / 2);
 
-        BufferBuilder buf = getTessellator().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_TEXTURE);
+        BufferBuilder buf = getBuffer();
         Matrix4f mat = context.getMatrices().peek().getPositionMatrix();
 
-        buf.vertex(mat, x + w / 2F, y + h / 2F, 0).texture(0.5F, 0.5F);
+        buf.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_TEXTURE);
+        buf.vertex(mat, x + w / 2F, y + h / 2F, 0).texture(0.5F, 0.5F).next();
 
         int[][] corners = {
                 { x + w - r, y + r },
@@ -472,11 +488,11 @@ public final class RenderUtils {
                 float ry = corners[corner][1] + (float)(Math.sin(angle) * r);
                 float u = (rx - x) / w;
                 float v = (ry - y) / h;
-                buf.vertex(mat, rx, ry, 0).texture(u, v);
+                buf.vertex(mat, rx, ry, 0).texture(u, v).next();
             }
         }
 
-        buf.vertex(mat, corners[0][0], y, 0).texture(((float)corners[0][0] - x) / w, 0); // connect last to first vertex
+        buf.vertex(mat, corners[0][0], y, 0).texture(((float)corners[0][0] - x) / w, 0).next(); // connect last to first vertex
 
         disableCull();
         setShader(GameRenderer::getPositionTexProgram);
@@ -540,7 +556,8 @@ public final class RenderUtils {
         BufferRenderer.drawWithGlobalProgram(buf.end());
     }
 
-    public static Tessellator getTessellator() { return Tessellator.getInstance();
+    public static BufferBuilder getBuffer() {
+        return Tessellator.getInstance().getBuffer();
     }
 
     public static int width() {

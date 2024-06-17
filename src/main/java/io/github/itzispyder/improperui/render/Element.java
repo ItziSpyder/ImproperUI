@@ -187,7 +187,7 @@ public class Element {
         registerProperty("visibility", args -> visibility = args.get(0).toEnum(Visibility.class));
         registerProperty("background-clip", args -> backgroundClip = args.get(0).toEnum(BackgroundClip.class));
         registerProperty("background-color", args -> fillColor = args.get(0).toColor());
-        registerProperty("background-image", args -> backgroundImage = Identifier.of(args.get(0).toString()));
+        registerProperty("background-image", args -> backgroundImage = new Identifier(args.get(0).toString()));
         registerProperty("opacity", args -> opacity = args.get(0).toFloat());
         registerProperty("draggable", args -> draggable = args.get(0).toBool());
         registerProperty("scrollable", args -> scrollable = args.get(0).toBool());
