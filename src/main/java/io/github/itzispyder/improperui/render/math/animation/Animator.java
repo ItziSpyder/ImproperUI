@@ -2,7 +2,8 @@ package io.github.itzispyder.improperui.render.math.animation;
 
 import io.github.itzispyder.improperui.util.MathUtils;
 
-import static net.minecraft.util.math.ColorHelper.Argb.*;
+import static net.minecraft.util.math.ColorHelper.*;
+
 
 public class Animator {
 

@@ -2,6 +2,8 @@ package io.github.itzispyder.improperui.util;
 
 import io.github.itzispyder.improperui.client.ImproperUIClient;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.ShaderProgramKey;
+import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.Window;
@@ -440,7 +442,7 @@ public final class RenderUtils {
         buf.vertex(mat, x + w, y, 0).texture(1, 0);
 
         disableCull();
-        setShader(GameRenderer::getPositionTexProgram);
+        setShader(ShaderProgramKeys.POSITION_COLOR);
         setShaderTexture(0, texture);
 
         BufferRenderer.drawWithGlobalProgram(buf.end());
@@ -479,7 +481,7 @@ public final class RenderUtils {
         buf.vertex(mat, corners[0][0], y, 0).texture(((float)corners[0][0] - x) / w, 0); // connect last to first vertex
 
         disableCull();
-        setShader(GameRenderer::getPositionTexProgram);
+        setShader(ShaderProgramKeys.POSITION_COLOR);
         setShaderTexture(0, texture);
 
         BufferRenderer.drawWithGlobalProgram(buf.end());
@@ -493,7 +495,7 @@ public final class RenderUtils {
         context.getMatrices().push();
         context.getMatrices().scale(scale, scale, scale);
         context.drawItem(item, x, y);
-        context.drawItemInSlot(mc.textRenderer, item, x, y);
+        context.drawStackOverlay(mc.textRenderer, item, x, y);
         context.getMatrices().pop();
     }
 
@@ -503,7 +505,7 @@ public final class RenderUtils {
         context.getMatrices().push();
         context.getMatrices().scale(scale, scale, scale);
         context.drawItem(item, x, y);
-        context.drawItemInSlot(mc.textRenderer, item, x, y, text);
+        context.drawStackOverlay(mc.textRenderer, item, x, y, text);
         context.getMatrices().pop();
     }
 
@@ -521,13 +523,13 @@ public final class RenderUtils {
         disableCull();
         enableBlend();
         defaultBlendFunc();
-        setShader(GameRenderer::getPositionColorProgram);
+        setShader(ShaderProgramKeys.POSITION_COLOR);
     }
 
     public static void finishRendering() {
         enableCull();
         disableBlend();
-        setShader(GameRenderer::getPositionTexProgram);
+        setShader(ShaderProgramKeys.POSITION_COLOR);
     }
 
     public static void check(boolean check, String msg) {
