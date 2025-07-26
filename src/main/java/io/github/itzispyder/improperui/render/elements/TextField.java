@@ -1,6 +1,5 @@
 package io.github.itzispyder.improperui.render.elements;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.itzispyder.improperui.config.ConfigKey;
 import io.github.itzispyder.improperui.config.PropertyCache;
 import io.github.itzispyder.improperui.render.Element;
@@ -10,17 +9,16 @@ import io.github.itzispyder.improperui.render.constants.Visibility;
 import io.github.itzispyder.improperui.render.math.Dimensions;
 import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.MathUtils;
-import io.github.itzispyder.improperui.util.RenderUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
+import io.github.itzispyder.improperui.util.render.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.math.RotationAxis;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.function.Function;
 
-import static io.github.itzispyder.improperui.util.RenderUtils.*;
+import static io.github.itzispyder.improperui.util.render.RenderUtils.*;
 
 public class TextField extends KeyHolderElement {
 
@@ -85,18 +83,16 @@ public class TextField extends KeyHolderElement {
         if (visibility == Visibility.INVISIBLE)
             return;
 
-        context.getMatrices().push();
+        context.getMatrices().pushMatrix();
         int cx = x + width / 2;
         int cy = y + height / 2;
-        context.getMatrices().multiply(RotationAxis.POSITIVE_X.rotationDegrees(rotateX), cx, cy, 0);
-        context.getMatrices().multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotateY), cx, cy, 0);
-        context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotateZ), cx, cy, 0);
+        context.getMatrices().rotateAbout((float)Math.toRadians(rotateZ), cx, cy);
+//        context.getMatrices().multiply(RotationAxis.POSITIVE_X.rotationDegrees(rotateX), cx, cy, 0);
+//        context.getMatrices().multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotateY), cx, cy, 0);
+//        context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotateZ), cx, cy, 0);
 
         if (visibility != Visibility.ONLY_CHILDREN) {
-            boolean notOpaque = opacity < 1.0F;
             boolean focused = parentPanel != null && parentPanel.focused == this;
-            if (notOpaque)
-                RenderSystem.setShaderColor(1, 1, 1, opacity);
 
             RenderUtils.fillRoundShadow(context,
                     x + marginLeft - paddingLeft - borderThickness,
@@ -105,7 +101,7 @@ public class TextField extends KeyHolderElement {
                     height + paddingTop + paddingBottom + borderThickness * 2,
                     borderRadius,
                     shadowDistance,
-                    shadowColor.getHex(),
+                    shadowColor.getHexCustomOpacity(opacity),
                     shadowColor.getHexCustomAlpha(0)
             );
             RenderUtils.fillRoundShadow(context,
@@ -115,8 +111,8 @@ public class TextField extends KeyHolderElement {
                     height + paddingTop + paddingBottom,
                     borderRadius,
                     borderThickness,
-                    focused ? borderColor.getHex() : borderColor.darker().getHex(),
-                    focused ? borderColor.getHex() : borderColor.darker().getHex()
+                    focused ? borderColor.getHexCustomOpacity(opacity) : borderColor.darker().getHexCustomOpacity(opacity),
+                    focused ? borderColor.getHexCustomOpacity(opacity) : borderColor.darker().getHexCustomOpacity(opacity)
             );
             RenderUtils.fillRoundRect(context,
                     x + marginLeft - paddingLeft,
@@ -124,7 +120,7 @@ public class TextField extends KeyHolderElement {
                     width + paddingLeft + paddingRight,
                     height + paddingTop + paddingBottom,
                     borderRadius,
-                    focused ? fillColor.getHex() : fillColor.darker().getHex()
+                    focused ? fillColor.getHexCustomOpacity(opacity) : fillColor.darker().getHexCustomOpacity(opacity)
             );
             if (backgroundImage != null) {
                 RenderUtils.drawRoundTexture(context,
@@ -136,9 +132,6 @@ public class TextField extends KeyHolderElement {
                         borderRadius
                 );
             }
-
-            if (notOpaque)
-                RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
         if (visibility != Visibility.ONLY_SELF) {
@@ -161,7 +154,7 @@ public class TextField extends KeyHolderElement {
                 context.disableScissor();
         }
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
 
         if (mouseDown)
             pollMouseSelection(mx, my);
@@ -506,8 +499,8 @@ public class TextField extends KeyHolderElement {
                     drawBox(context, x, y, width, height, color);
                 }
                 int color = TextField.this.parentPanel.focused == TextField.this ?
-                        (selected ? 0xFF000000 : TextField.this.textColor.brighter().brighter().getHex()) :
-                        TextField.this.textColor.getHex();
+                        (selected ? 0xFF000000 : TextField.this.textColor.brighter().brighter().getHexCustomOpacity(opacity)) :
+                        TextField.this.textColor.getHexCustomOpacity(opacity);
                 drawDefaultCode(context, ch, x, y - 2, false, color);
             }
 

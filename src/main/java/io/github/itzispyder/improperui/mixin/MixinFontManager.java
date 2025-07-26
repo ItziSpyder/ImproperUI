@@ -18,7 +18,7 @@ public abstract class MixinFontManager implements FontManagerAccessor {
     @Shadow @Final private FontStorage missingStorage;
 
     @Override
-    public TextRenderer createRenderer(Identifier fontId) {
+    public TextRenderer improperUI$createRenderer(Identifier fontId) {
         return new TextRenderer(id -> this.fontStorages.getOrDefault(fontId, this.missingStorage), false);
     }
 }

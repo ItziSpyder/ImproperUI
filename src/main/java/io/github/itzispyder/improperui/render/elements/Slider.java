@@ -1,16 +1,15 @@
 package io.github.itzispyder.improperui.render.elements;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.itzispyder.improperui.config.ConfigKey;
 import io.github.itzispyder.improperui.config.PropertyCache;
 import io.github.itzispyder.improperui.render.KeyHolderElement;
 import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.MathUtils;
-import io.github.itzispyder.improperui.util.RenderUtils;
+import io.github.itzispyder.improperui.util.render.RenderUtils;
 import net.minecraft.client.gui.DrawContext;
 
-import static io.github.itzispyder.improperui.util.RenderUtils.drawText;
-import static io.github.itzispyder.improperui.util.RenderUtils.fillRect;
+import static io.github.itzispyder.improperui.util.render.RenderUtils.drawText;
+import static io.github.itzispyder.improperui.util.render.RenderUtils.fillRect;
 
 public class Slider extends KeyHolderElement {
 
@@ -52,10 +51,6 @@ public class Slider extends KeyHolderElement {
         int x = getPosX() + marginLeft - paddingLeft;
         int y = getPosY() + marginTop - paddingTop;
 
-        boolean notOpaque = opacity < 1.0F;
-        if (notOpaque)
-            RenderSystem.setShaderColor(1, 1, 1, opacity);
-
         if (parentPanel != null && parentPanel.selected == this) {
             this.fillEnd = MathUtils.clamp(mx, x, x + width);
             double range = max - min;
@@ -78,8 +73,8 @@ public class Slider extends KeyHolderElement {
 
         String text = "(%s)".formatted(val);
         drawText(context, text, x + width + 10, y + (height - 7) / 2, 0.9F, false);
-        fillRect(context, x, y + height / 2 - 1, width, 2, borderColor.getHex());
-        fillRect(context, x, y + height / 2 - 1, len, 2, fillColor.getHex());
+        fillRect(context, x, y + height / 2 - 1, width, 2, borderColor.getHexCustomOpacity(opacity));
+        fillRect(context, x, y + height / 2 - 1, len, 2, fillColor.getHexCustomOpacity(opacity));
 
         x = fillEnd - (height / 2 + paddingLeft + paddingRight) / 2;
         y = y + (height - (height / 2 + paddingTop + paddingBottom)) / 2;
@@ -91,7 +86,7 @@ public class Slider extends KeyHolderElement {
                 height / 2 + paddingTop + paddingBottom + borderThickness * 2,
                 borderRadius,
                 shadowDistance,
-                shadowColor.getHex(),
+                shadowColor.getHexCustomOpacity(opacity),
                 shadowColor.getHexCustomAlpha(0)
         );
         RenderUtils.fillRoundShadow(context, x, y,
@@ -99,14 +94,14 @@ public class Slider extends KeyHolderElement {
                 height / 2 + paddingTop + paddingBottom,
                 borderRadius,
                 borderThickness,
-                borderColor.getHex(),
-                borderColor.getHex()
+                borderColor.getHexCustomOpacity(opacity),
+                borderColor.getHexCustomOpacity(opacity)
         );
         RenderUtils.fillRoundRect(context, x, y,
                 height / 2 + paddingLeft + paddingRight,
                 height / 2 + paddingTop + paddingBottom,
                 borderRadius,
-                fillColor.getHex()
+                fillColor.getHexCustomOpacity(opacity)
         );
         if (backgroundImage != null) {
             RenderUtils.drawRoundTexture(context,
@@ -116,9 +111,6 @@ public class Slider extends KeyHolderElement {
                     borderRadius
             );
         }
-
-        if (notOpaque)
-            RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
     @Override

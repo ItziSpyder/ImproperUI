@@ -2,7 +2,6 @@ package io.github.itzispyder.improperui.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.itzispyder.improperui.render.constants.*;
 import io.github.itzispyder.improperui.render.elements.Positionable;
 import io.github.itzispyder.improperui.render.math.Color;
@@ -12,13 +11,12 @@ import io.github.itzispyder.improperui.script.ScriptReader;
 import io.github.itzispyder.improperui.script.events.KeyEvent;
 import io.github.itzispyder.improperui.script.events.MouseEvent;
 import io.github.itzispyder.improperui.util.MathUtils;
-import io.github.itzispyder.improperui.util.RenderUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
+import io.github.itzispyder.improperui.util.render.RenderUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.RotationAxis;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -535,18 +533,15 @@ public class Element {
         if (visibility == Visibility.INVISIBLE)
             return;
 
-        context.getMatrices().push();
+        context.getMatrices().pushMatrix();
         int cx = x + width / 2;
         int cy = y + height / 2;
-        context.getMatrices().multiply(RotationAxis.POSITIVE_X.rotationDegrees(rotateX), cx, cy, 0);
-        context.getMatrices().multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotateY), cx, cy, 0);
-        context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotateZ), cx, cy, 0);
+        context.getMatrices().rotateAbout((float)Math.toRadians(rotateZ), cx, cy);
+//        context.getMatrices().multiply(RotationAxis.POSITIVE_X.rotationDegrees(rotateX), cx, cy, 0);
+//        context.getMatrices().multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotateY), cx, cy, 0);
+//        context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotateZ), cx, cy, 0);
 
         if (visibility != Visibility.ONLY_CHILDREN) {
-            boolean notOpaque = opacity < 1.0F;
-            if (notOpaque)
-                RenderSystem.setShaderColor(1, 1, 1, opacity);
-
             RenderUtils.fillRoundShadow(context,
                     x + marginLeft - paddingLeft - borderThickness,
                     y + marginTop - paddingTop - borderThickness,
@@ -554,8 +549,8 @@ public class Element {
                     height + paddingTop + paddingBottom + borderThickness * 2,
                     borderRadius,
                     shadowDistance,
-                    shadowColor.getHex(),
-                    shadowFadeColor.getHex()
+                    shadowColor.getHexCustomOpacity(opacity),
+                    shadowFadeColor.getHexCustomAlpha(0)
             );
             RenderUtils.fillRoundShadow(context,
                     x + marginLeft - paddingLeft,
@@ -564,8 +559,8 @@ public class Element {
                     height + paddingTop + paddingBottom,
                     borderRadius,
                     borderThickness,
-                    borderColor.getHex(),
-                    borderColor.getHex()
+                    borderColor.getHexCustomOpacity(opacity),
+                    borderColor.getHexCustomOpacity(opacity)
             );
             RenderUtils.fillRoundRect(context,
                     x + marginLeft - paddingLeft,
@@ -573,7 +568,7 @@ public class Element {
                     width + paddingLeft + paddingRight,
                     height + paddingTop + paddingBottom,
                     borderRadius,
-                    fillColor.getHex()
+                    fillColor.getHexCustomOpacity(opacity)
             );
             if (backgroundImage != null) {
                 RenderUtils.drawRoundTexture(context,
@@ -593,14 +588,11 @@ public class Element {
                 y += marginTop;
                 int textY = (int)(y + (height - (textScale * 7)) / 2);
                 switch (textAlignment) {
-                    case LEFT -> RenderUtils.drawDefaultScaledText(context, text, x, textY, textScale, textShadow, textColor.getHex());
-                    case CENTER -> RenderUtils.drawDefaultCenteredScaledText(context, text, x + width / 2, textY, textScale, textShadow, textColor.getHex());
-                    case RIGHT -> RenderUtils.drawDefaultRightScaledText(context, text, x + width, textY, textScale, textShadow, textColor.getHex());
+                    case LEFT -> RenderUtils.drawDefaultScaledText(context, text, x, textY, textScale, textShadow, textColor.getHexCustomOpacity(opacity));
+                    case CENTER -> RenderUtils.drawDefaultCenteredScaledText(context, text, x + width / 2, textY, textScale, textShadow, textColor.getHexCustomOpacity(opacity));
+                    case RIGHT -> RenderUtils.drawDefaultRightScaledText(context, text, x + width, textY, textScale, textShadow, textColor.getHexCustomOpacity(opacity));
                 }
             }
-
-            if (notOpaque)
-                RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
         if (visibility != Visibility.ONLY_SELF) {
@@ -623,7 +615,7 @@ public class Element {
                 context.disableScissor();
         }
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     public void onRenderChildren(DrawContext context, int mx, int my, float delta) {

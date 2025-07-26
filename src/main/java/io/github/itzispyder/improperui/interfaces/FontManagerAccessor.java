@@ -5,5 +5,5 @@ import net.minecraft.util.Identifier;
 
 public interface FontManagerAccessor {
 
-    TextRenderer createRenderer(Identifier fontId);
+    TextRenderer improperUI$createRenderer(Identifier fontId);
 }

@@ -119,6 +119,10 @@ public class Color {
         return getHexCustomAlpha((int)(alpha * 0xFF));
     }
 
+    public int getHexCustomOpacity(double opacity) {
+        return ((int)(a * opacity) << 24) | r << 16 | g << 8 | b;
+    }
+
     public Color withAlpha(int a) {
         return new Color(a, r, g, b);
     }

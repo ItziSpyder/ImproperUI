@@ -14,25 +14,25 @@ public final class ChatUtils {
 
     public static void sendMessage(String message) {
         if (message != null && mc.player != null) {
-            mc.player.sendMessage(Text.literal(message));
+            mc.player.sendMessage(Text.literal(message), false);
         }
     }
 
     public static void sendFormatted(String message, Object... args) {
         if (message != null && mc.player != null) {
-            mc.player.sendMessage(Text.literal(StringUtils.color(String.format(message, args))));
+            mc.player.sendMessage(Text.literal(StringUtils.color(String.format(message, args))), false);
         }
     }
 
     public static void sendRawText(Text text) {
         if (mc.player != null && text != null) {
-            mc.player.sendMessage(text);
+            mc.player.sendMessage(text, false);
         }
     }
 
     public static void sendChatCommand(String cmd) {
         if (mc.player != null) {
-            mc.player.networkHandler.sendCommand(cmd);
+            mc.player.networkHandler.sendChatCommand(cmd);
         }
     }
 
