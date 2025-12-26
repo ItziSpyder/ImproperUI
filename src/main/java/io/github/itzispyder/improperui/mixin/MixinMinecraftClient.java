@@ -1,7 +1,7 @@
 package io.github.itzispyder.improperui.mixin;
 
 import io.github.itzispyder.improperui.client.ImproperUIClient;
-import io.github.itzispyder.improperui.interfaces.FontManagerAccessor;
+import io.github.itzispyder.improperui.interfaces.AccessorFontManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.FontManager;
 import net.minecraft.util.Identifier;
@@ -20,7 +20,8 @@ public abstract class MixinMinecraftClient {
 
     @Inject(method = "onFontOptionsChanged", at = @At("TAIL"))
     public void initFont(CallbackInfo ci) {
-        var fonts = ((FontManagerAccessor)this.fontManager);
-        ImproperUIClient.getInstance().codeRenderer = fonts.improperUI$createRenderer(UNICODE_FONT_ID);
+        ImproperUIClient improper = ImproperUIClient.getInstance();
+        AccessorFontManager fonts = (AccessorFontManager) this.fontManager;
+        improper.codeRenderer = fonts.improperUI$createRenderer(UNICODE_FONT_ID);
     }
 }

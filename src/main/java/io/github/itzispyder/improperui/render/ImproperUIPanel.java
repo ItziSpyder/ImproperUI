@@ -8,8 +8,10 @@ import io.github.itzispyder.improperui.util.ChatUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
 import io.github.itzispyder.improperui.util.render.RenderUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -94,9 +96,10 @@ public class ImproperUIPanel extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        int mx = (int) mouseX;
-        int my = (int) mouseY;
+    public boolean mouseClicked(Click click, boolean doubled) {
+        int mx = (int) click.x();
+        int my = (int) click.y();
+        int button = click.button();
 
         for (var child : collectOrdered()) {
             if (child.pollClickable(button, mx, my, false)) {
@@ -112,9 +115,10 @@ public class ImproperUIPanel extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        int mx = (int) mouseX;
-        int my = (int) mouseY;
+    public boolean mouseReleased(Click click) {
+        int mx = (int) click.x();
+        int my = (int) click.y();
+        int button = click.button();
 
         for (var child : collectOrdered()) {
             if (child.pollClickable(button, mx, my, true)) {
@@ -148,7 +152,10 @@ public class ImproperUIPanel extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
+        int keyCode = input.key();
+        int scanCode = input.scancode();
+
         if (keyCode == GLFW.GLFW_KEY_LEFT_SHIFT || keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT)
             this.shiftKeyPressed = true;
         else if (keyCode == GLFW.GLFW_KEY_LEFT_ALT || keyCode == GLFW.GLFW_KEY_RIGHT_ALT)
@@ -156,7 +163,7 @@ public class ImproperUIPanel extends Screen {
         else if (keyCode == GLFW.GLFW_KEY_LEFT_CONTROL || keyCode == GLFW.GLFW_KEY_RIGHT_CONTROL)
             this.ctrlKeyPressed = true;
 
-        super.keyPressed(keyCode, scanCode, modifiers);
+        super.keyPressed(input);
 
         if (focused != null)
             focused.onKey(keyCode, scanCode, false);
@@ -164,7 +171,10 @@ public class ImproperUIPanel extends Screen {
     }
 
     @Override
-    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+    public boolean keyReleased(KeyInput input) {
+        int keyCode = input.key();
+        int scanCode = input.scancode();
+
         if (keyCode == GLFW.GLFW_KEY_LEFT_SHIFT || keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT)
             this.shiftKeyPressed = false;
         else if (keyCode == GLFW.GLFW_KEY_LEFT_ALT || keyCode == GLFW.GLFW_KEY_RIGHT_ALT)
@@ -172,7 +182,7 @@ public class ImproperUIPanel extends Screen {
         else if (keyCode == GLFW.GLFW_KEY_LEFT_CONTROL || keyCode == GLFW.GLFW_KEY_RIGHT_CONTROL)
             this.ctrlKeyPressed = false;
 
-        super.keyReleased(keyCode, scanCode, modifiers);
+        super.keyReleased(input);
 
         if (focused != null)
             focused.onKey(keyCode, scanCode, true);
@@ -185,7 +195,7 @@ public class ImproperUIPanel extends Screen {
     }
 
     @Override
-    public void resize(MinecraftClient client, int width, int height) {
+    public void resize(int width, int height) {
         if (uiScriptAsFile != null)
             new ImproperUIPanel(uiScriptAsFile, callbackListeners.toArray(CallbackListener[]::new)).open();
         else if (uiScriptAsString != null)
