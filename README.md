@@ -19,14 +19,17 @@ This screen is scripted using ImproperUI Script:
 
 ### Recent Changes
 ```yml
-Version: 0.0.6-BETA
+Version: 0.0.7-BETA
 
 Added:
-  - added ConfigReader
-  - added ImproperUIAPI.getConfigReader()
+  - added support for collect() helper methods chain calls
+  - optimized ImproperUIPanel mouse events
 
 Patches:
-  - fixed config integer args not parsing properly
+  - fixed ConfigReader readFloat
+  - fixed element children not updating parentPanel field
+  - fixed scrolling hitboxes
+  - fixed on-key element property not working
 ```
 
 ### Adding ImproperUI to your Project

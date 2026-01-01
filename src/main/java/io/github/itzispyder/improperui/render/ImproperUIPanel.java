@@ -101,6 +101,15 @@ public class ImproperUIPanel extends Screen {
         int my = (int) click.y();
         int button = click.button();
 
+        if (hovered != null && hovered.pollClickable(button, mx, my, false)) {
+            switch (button) {
+                case 0 -> hovered.onLeftClick(mx, my, false);
+                case 1 -> hovered.onRightClick(mx, my, false);
+                case 2 -> hovered.onMiddleClick(mx, my, false);
+            }
+            return true;
+        }
+
         for (var child : collectOrdered()) {
             if (child.pollClickable(button, mx, my, false)) {
                 switch (button) {
@@ -119,6 +128,16 @@ public class ImproperUIPanel extends Screen {
         int mx = (int) click.x();
         int my = (int) click.y();
         int button = click.button();
+
+        if (hovered != null && hovered.pollClickable(button, mx, my, true)) {
+            switch (button) {
+                case 0 -> hovered.onLeftClick(mx, my, true);
+                case 1 -> hovered.onRightClick(mx, my, true);
+                case 2 -> hovered.onMiddleClick(mx, my, true);
+            }
+            selected = null;
+            return true;
+        }
 
         for (var child : collectOrdered()) {
             if (child.pollClickable(button, mx, my, true)) {
@@ -165,7 +184,7 @@ public class ImproperUIPanel extends Screen {
 
         super.keyPressed(input);
 
-        if (focused != null)
+        if (focused != null && focused.pollTypeable(keyCode, scanCode, false))
             focused.onKey(keyCode, scanCode, false);
         return true;
     }
@@ -184,7 +203,7 @@ public class ImproperUIPanel extends Screen {
 
         super.keyReleased(input);
 
-        if (focused != null)
+        if (focused != null && focused.pollTypeable(keyCode, scanCode, true))
             focused.onKey(keyCode, scanCode, true);
         return true;
     }

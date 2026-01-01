@@ -387,6 +387,7 @@ public class Element {
             return;
         children.add(child);
         child.parent = this;
+        this.setParentPanel(this.parentPanel);
     }
 
     public void removeChild(Element child) {
@@ -668,7 +669,7 @@ public class Element {
     }
 
     public boolean pollScrollable(int mx, int my, boolean up) {
-        if (clickThrough || parentPanel == null || visibility == Visibility.INVISIBLE)
+        if (!scrollable || clickThrough || parentPanel == null || visibility == Visibility.INVISIBLE)
             return false;
         if (!getHitboxDimensions().contains(mx, my))
             return false;
@@ -681,17 +682,15 @@ public class Element {
 
         if (visibility != Visibility.ONLY_CHILDREN) {
             int delta = 0;
-            if (scrollable) {
-                for (int i = 0; i < 10; i++) {
-                    var dim = getMarginalDimensions();
-                    if (up && children.stream().noneMatch(child -> child.getMarginalDimensions().y < dim.y))
-                        break;
-                    if (!up && children.stream().noneMatch(child -> child.getMarginalDimensions().heightY > dim.heightY))
-                        break;
-                    int dy = up ? 1 : -1;
-                    delta += dy;
-                    children.forEach(child -> child.move(0, dy));
-                }
+            for (int i = 0; i < 10; i++) {
+                var dim = getMarginalDimensions();
+                if (up && children.stream().noneMatch(child -> child.getMarginalDimensions().y < dim.y))
+                    break;
+                if (!up && children.stream().noneMatch(child -> child.getMarginalDimensions().heightY > dim.heightY))
+                    break;
+                int dy = up ? 1 : -1;
+                delta += dy;
+                children.forEach(child -> child.move(0, dy));
             }
             parentPanel.runCallbacks(scrollAction, new MouseEvent(2, delta, InputType.SCROLL, this));
         }
@@ -830,6 +829,36 @@ public class Element {
 
     public List<Element> collectOrdered() {
         return new ArrayList<>(collect().stream().sorted(ORDER).toList());
+    }
+
+    public List<Element> collectById(String id) {
+        List<Element> list = new ArrayList<>();
+        for (Element child : collect())
+            if (child.getId().equals(id))
+                list.add(child);
+        return list;
+    }
+
+    public Element collectFirstById(String id) {
+        for (Element child : collect())
+            if (child.getId().equals(id))
+                return child;
+        return null;
+    }
+
+    public List<Element> collectByClassAttribute(String classAttribute) {
+        List<Element> list = new ArrayList<>();
+        for (Element child : collect())
+            if (child.classList.contains(classAttribute))
+                list.add(child);
+        return list;
+    }
+
+    public Element collectFirstByClassAttribute(String classAttribute) {
+        for (Element child : collect())
+            if (child.classList.contains(classAttribute))
+                return child;
+        return null;
     }
 
     private Element parsePropertiesThenSet(Element target, String excerpt) {
