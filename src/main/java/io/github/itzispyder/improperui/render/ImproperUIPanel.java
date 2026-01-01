@@ -18,6 +18,7 @@ import org.lwjgl.glfw.GLFW;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ImproperUIPanel extends Screen {
 
@@ -292,14 +293,14 @@ public class ImproperUIPanel extends Screen {
     public List<Element> collectById(String id) {
         List<Element> list = new ArrayList<>();
         for (Element child : collect())
-            if (child.getId().equals(id))
+            if (Objects.equals(child.getId(), id))
                 list.add(child);
         return list;
     }
 
     public Element collectFirstById(String id) {
         for (Element child : collect())
-            if (child.getId().equals(id))
+            if (Objects.equals(child.getId(), id))
                 return child;
         return null;
     }

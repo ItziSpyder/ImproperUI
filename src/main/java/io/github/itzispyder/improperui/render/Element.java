@@ -834,14 +834,14 @@ public class Element {
     public List<Element> collectById(String id) {
         List<Element> list = new ArrayList<>();
         for (Element child : collect())
-            if (child.getId().equals(id))
+            if (Objects.equals(child.getId(), id))
                 list.add(child);
         return list;
     }
 
     public Element collectFirstById(String id) {
         for (Element child : collect())
-            if (child.getId().equals(id))
+            if (Objects.equals(child.getId(), id))
                 return child;
         return null;
     }

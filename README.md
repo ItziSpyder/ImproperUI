@@ -30,6 +30,7 @@ Patches:
   - fixed element children not updating parentPanel field
   - fixed scrolling hitboxes
   - fixed on-key element property not working
+  - fixed collectById() methods crashing on elements without IDs
 ```
 
 ### Adding ImproperUI to your Project
