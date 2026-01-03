@@ -3,6 +3,12 @@ The ultimate solution to Minecraft Rendering being too hard to learn.
 
 ---
 
+
+![Modrinth Downloads](https://img.shields.io/modrinth/dt/improperui?label=Modrinth&color=04b54b)
+![CurseForge Downloads](https://img.shields.io/curseforge/dt/1418749?label=CurseForge&color=orange)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/itzispyder/improperui/total?label=GitHub&color=blue)
+
+
 ### Introduction
 Unlike my other project, ClickCrystals Script, ImproperUI Script requires you to have prior knowledge of 
 
