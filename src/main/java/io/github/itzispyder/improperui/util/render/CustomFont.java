@@ -4,16 +4,16 @@ import io.github.itzispyder.improperui.interfaces.AccessorFontManager;
 import io.github.itzispyder.improperui.mixin.AccessorMinecraftClient;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.EffectGlyph;
-import net.minecraft.client.font.FontStorage;
-import net.minecraft.client.font.GlyphProvider;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.text.StyleSpriteSource;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GlyphSource;
+import net.minecraft.client.gui.font.FontSet;
+import net.minecraft.client.gui.font.glyphs.EffectGlyph;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.resources.Identifier;
 
 @Environment(EnvType.CLIENT)
-public class CustomFont implements TextRenderer.GlyphsProvider, AutoCloseable {
+public class CustomFont implements Font.Provider, AutoCloseable {
 
     private final boolean advanceValidating;
     private volatile Cached cached;
@@ -35,35 +35,35 @@ public class CustomFont implements TextRenderer.GlyphsProvider, AutoCloseable {
         this.clear();
     }
 
-    private GlyphProvider getGlyphsImpl(StyleSpriteSource source) {
-        AccessorMinecraftClient mc = (AccessorMinecraftClient) MinecraftClient.getInstance();
+    private GlyphSource getGlyphsImpl(FontDescription source) {
+        AccessorMinecraftClient mc = (AccessorMinecraftClient) Minecraft.getInstance();
         AccessorFontManager fontManager = (AccessorFontManager) mc.accessFontManager();
-        FontStorage storage = fontManager.improperUI$getInternalStorage(fontId);
-        return storage.getGlyphs(advanceValidating);
+        FontSet storage = fontManager.improperUI$getInternalStorage(fontId);
+        return storage.source(advanceValidating);
     }
 
     @Override
-    public GlyphProvider getGlyphs(StyleSpriteSource source) {
+    public GlyphSource glyphs(FontDescription source) {
         if (cached != null && source.equals(cached.source)) {
             return cached.glyphs;
         }
         else {
-            GlyphProvider glyphProvider = this.getGlyphsImpl(source);
+            GlyphSource glyphProvider = this.getGlyphsImpl(source);
             this.cached = new Cached(source, glyphProvider);
             return glyphProvider;
         }
     }
 
     @Override
-    public EffectGlyph getRectangleGlyph() {
+    public EffectGlyph effect() {
         EffectGlyph effectGlyph = this.rectangle;
 
         if (effectGlyph == null) {
-            AccessorMinecraftClient mc = (AccessorMinecraftClient) MinecraftClient.getInstance();
+            AccessorMinecraftClient mc = (AccessorMinecraftClient) Minecraft.getInstance();
             AccessorFontManager fontManager = (AccessorFontManager) mc.accessFontManager();
-            FontStorage storage = fontManager.improperUI$getInternalStorage(StyleSpriteSource.DEFAULT.id());
+            FontSet storage = fontManager.improperUI$getInternalStorage(FontDescription.DEFAULT.id());
 
-            effectGlyph = storage.getRectangleBakedGlyph();
+            effectGlyph = storage.whiteGlyph();
             this.rectangle = effectGlyph;
         }
 
@@ -71,5 +71,5 @@ public class CustomFont implements TextRenderer.GlyphsProvider, AutoCloseable {
     }
 
     @Environment(EnvType.CLIENT)
-    record Cached(StyleSpriteSource source, GlyphProvider glyphs) {}
+    record Cached(FontDescription source, GlyphSource glyphs) {}
 }

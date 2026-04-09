@@ -2,7 +2,7 @@ package io.github.itzispyder.improperui.render.elements;
 
 import io.github.itzispyder.improperui.render.Element;
 import io.github.itzispyder.improperui.util.StringUtils;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public class Label extends Element {
 
@@ -32,16 +32,16 @@ public class Label extends Element {
     }
 
     @Override
-    public void onRender(DrawContext context, int mx, int my, float delta) {
+    public void onRender(GuiGraphicsExtractor context, int mx, int my, float delta) {
         super.onRender(context, mx, my, delta);
         updateDimensions();
     }
 
     private void updateDimensions() {
         var text = getText();
-        if (mc != null && mc.textRenderer != null && text != null) {
-            width = (int)(mc.textRenderer.getWidth(text) * textScale);
-            height = (int)(mc.textRenderer.fontHeight * textScale);
+        if (mc != null && mc.font != null && text != null) {
+            width = (int)(mc.font.width(text) * textScale);
+            height = (int)(mc.font.lineHeight * textScale);
         }
     }
 }

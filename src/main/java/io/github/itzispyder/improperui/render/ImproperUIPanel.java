@@ -7,12 +7,12 @@ import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.ChatUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
 import io.github.itzispyder.improperui.util.render.RenderUtils;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.File;
@@ -32,7 +32,7 @@ public class ImproperUIPanel extends Screen {
     private String uiScriptAsString;
 
     public ImproperUIPanel() {
-        super(Text.of("Custom Scripted Panel Screen"));
+        super(Component.nullToEmpty("Custom Scripted Panel Screen"));
         children = new ArrayList<>();
         callbackListeners = new ArrayList<>();
         cursor = new int[2];
@@ -57,12 +57,12 @@ public class ImproperUIPanel extends Screen {
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
 
     }
 
     @Override
-    public void render(DrawContext context, int mx, int my, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mx, int my, float delta) {
         if (selected != null && selected.draggable) {
             int dx = mx - cursor[0];
             int dy = my - cursor[1];
@@ -97,7 +97,7 @@ public class ImproperUIPanel extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
         int mx = (int) click.x();
         int my = (int) click.y();
         int button = click.button();
@@ -125,7 +125,7 @@ public class ImproperUIPanel extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(MouseButtonEvent click) {
         int mx = (int) click.x();
         int my = (int) click.y();
         int button = click.button();
@@ -172,7 +172,7 @@ public class ImproperUIPanel extends Screen {
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         int keyCode = input.key();
         int scanCode = input.scancode();
 
@@ -191,7 +191,7 @@ public class ImproperUIPanel extends Screen {
     }
 
     @Override
-    public boolean keyReleased(KeyInput input) {
+    public boolean keyReleased(KeyEvent input) {
         int keyCode = input.key();
         int scanCode = input.scancode();
 
@@ -246,7 +246,7 @@ public class ImproperUIPanel extends Screen {
                 .toList());
     }
 
-    public void clearChildren() {
+    public void clearWidgets() {
         var children = getChildren();
         children.forEach(this::removeChild);
     }
@@ -321,8 +321,8 @@ public class ImproperUIPanel extends Screen {
     }
 
     public void open() {
-        var mc = MinecraftClient.getInstance();
-        if (mc.currentScreen != this)
+        var mc = Minecraft.getInstance();
+        if (mc.screen != this)
             mc.execute(() -> mc.setScreen(this));
     }
 }

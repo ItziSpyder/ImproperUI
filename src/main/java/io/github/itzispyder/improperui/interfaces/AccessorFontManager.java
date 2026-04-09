@@ -1,12 +1,12 @@
 package io.github.itzispyder.improperui.interfaces;
 
-import net.minecraft.client.font.FontStorage;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.font.FontSet;
+import net.minecraft.resources.Identifier;
 
 public interface AccessorFontManager {
 
-    TextRenderer improperUI$createRenderer(Identifier fontId);
+    Font improperUI$createRenderer(Identifier fontId);
 
-    FontStorage improperUI$getInternalStorage(Identifier fontId);
+    FontSet improperUI$getInternalStorage(Identifier fontId);
 }

@@ -1,7 +1,7 @@
 package io.github.itzispyder.improperui.client;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Font;
 
 public class ImproperUIClient implements ClientModInitializer {
 
@@ -10,7 +10,7 @@ public class ImproperUIClient implements ClientModInitializer {
         return system;
     }
 
-    public TextRenderer codeRenderer;
+    public Font codeRenderer;
 
     public ImproperUIClient() {
 

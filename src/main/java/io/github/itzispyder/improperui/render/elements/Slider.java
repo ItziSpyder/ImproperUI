@@ -6,7 +6,7 @@ import io.github.itzispyder.improperui.render.KeyHolderElement;
 import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.MathUtils;
 import io.github.itzispyder.improperui.util.render.RenderUtils;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import static io.github.itzispyder.improperui.util.render.RenderUtils.drawText;
 import static io.github.itzispyder.improperui.util.render.RenderUtils.fillRect;
@@ -47,7 +47,7 @@ public class Slider extends KeyHolderElement {
     }
 
     @Override
-    public void onRender(DrawContext context, int mx, int my, float delta) {
+    public void onRender(GuiGraphicsExtractor context, int mx, int my, float delta) {
         int x = getPosX() + marginLeft - paddingLeft;
         int y = getPosY() + marginTop - paddingTop;
 

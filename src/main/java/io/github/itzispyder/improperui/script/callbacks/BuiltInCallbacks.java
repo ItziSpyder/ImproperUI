@@ -14,25 +14,25 @@ public class BuiltInCallbacks implements CallbackListener {
     @CallbackHandler
     public void openGithub(MouseEvent e) {
         if (e.input.isDown())
-            Util.getOperatingSystem().open("https://github.com/itzispyder/improperui");
+            Util.getPlatform().openUri("https://github.com/itzispyder/improperui");
     }
 
     @CallbackHandler
     public void openModrinth(MouseEvent e) {
         if (e.input.isDown())
-            Util.getOperatingSystem().open("https://modrinth.com/mod/improperui");
+            Util.getPlatform().openUri("https://modrinth.com/mod/improperui");
     }
 
     @CallbackHandler
     public void openDiscord(MouseEvent e) {
         if (e.input.isDown())
-            Util.getOperatingSystem().open("https://discord.gg/tMaShNzNtP");
+            Util.getPlatform().openUri("https://discord.gg/tMaShNzNtP");
     }
 
     @CallbackHandler
     public void openWiki(MouseEvent e) {
         if (e.input.isDown())
-            Util.getOperatingSystem().open("https://github.com/itzispyder/improperui/wiki");
+            Util.getPlatform().openUri("https://github.com/itzispyder/improperui/wiki");
     }
 
     @CallbackHandler

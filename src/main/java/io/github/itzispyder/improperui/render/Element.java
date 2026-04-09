@@ -13,10 +13,10 @@ import io.github.itzispyder.improperui.script.events.MouseEvent;
 import io.github.itzispyder.improperui.util.MathUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
 import io.github.itzispyder.improperui.util.render.RenderUtils;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -25,7 +25,7 @@ import java.util.function.Function;
 public class Element {
 
     public static final Comparator<Object> ORDER = Comparator.comparing(e -> ((Element)e).order).reversed();
-    protected static final MinecraftClient mc = MinecraftClient.getInstance();
+    protected static final Minecraft mc = Minecraft.getInstance();
 
     private static int sequence = 0;
     private String id, tag;
@@ -185,7 +185,7 @@ public class Element {
         registerProperty("visibility", args -> visibility = args.get(0).toEnum(Visibility.class));
         registerProperty("background-clip", args -> backgroundClip = args.get(0).toEnum(BackgroundClip.class));
         registerProperty("background-color", args -> fillColor = args.get(0).toColor());
-        registerProperty("background-image", args -> backgroundImage = Identifier.of(args.get(0).toString()));
+        registerProperty("background-image", args -> backgroundImage = Identifier.parse(args.get(0).toString()));
         registerProperty("opacity", args -> opacity = args.get(0).toFloat());
         registerProperty("draggable", args -> draggable = args.get(0).toBool());
         registerProperty("scrollable", args -> scrollable = args.get(0).toBool());
@@ -509,7 +509,7 @@ public class Element {
         return text;
     }
 
-    public void onRender(DrawContext context, int mx, int my, float delta) {
+    public void onRender(GuiGraphicsExtractor context, int mx, int my, float delta) {
         if (parentPanel != null) {
             if (parentPanel.selected == this && selectStyle != null) {
                 selectStyle.teleport(this);
@@ -534,10 +534,10 @@ public class Element {
         if (visibility == Visibility.INVISIBLE)
             return;
 
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
         int cx = x + width / 2;
         int cy = y + height / 2;
-        context.getMatrices().rotateAbout((float)Math.toRadians(rotateZ), cx, cy);
+        context.pose().rotateAbout((float)Math.toRadians(rotateZ), cx, cy);
 //        context.getMatrices().multiply(RotationAxis.POSITIVE_X.rotationDegrees(rotateX), cx, cy, 0);
 //        context.getMatrices().multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotateY), cx, cy, 0);
 //        context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotateZ), cx, cy, 0);
@@ -584,7 +584,7 @@ public class Element {
 
             var rawText = getText();
             if (rawText != null) {
-                Text text = Text.of(rawText);
+                Component text = Component.nullToEmpty(rawText);
                 x += marginLeft;
                 y += marginTop;
                 int textY = (int)(y + (height - (textScale * 7)) / 2);
@@ -616,10 +616,10 @@ public class Element {
                 context.disableScissor();
         }
 
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
     }
 
-    public void onRenderChildren(DrawContext context, int mx, int my, float delta) {
+    public void onRenderChildren(GuiGraphicsExtractor context, int mx, int my, float delta) {
         getChildren().forEach(child -> child.onRender(context, mx, my, delta));
     }
 

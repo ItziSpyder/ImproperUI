@@ -10,8 +10,7 @@ import io.github.itzispyder.improperui.render.math.Dimensions;
 import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.MathUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
-import io.github.itzispyder.improperui.util.render.RenderUtils;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -76,17 +75,17 @@ public class TextField extends KeyHolderElement {
     }
 
     @Override
-    public void onRender(DrawContext context, int mx, int my, float delta) {
+    public void onRender(GuiGraphicsExtractor context, int mx, int my, float delta) {
         int x = getPosX();
         int y = getPosY();
 
         if (visibility == Visibility.INVISIBLE)
             return;
 
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
         int cx = x + width / 2;
         int cy = y + height / 2;
-        context.getMatrices().rotateAbout((float)Math.toRadians(rotateZ), cx, cy);
+        context.pose().rotateAbout((float)Math.toRadians(rotateZ), cx, cy);
 //        context.getMatrices().multiply(RotationAxis.POSITIVE_X.rotationDegrees(rotateX), cx, cy, 0);
 //        context.getMatrices().multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotateY), cx, cy, 0);
 //        context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotateZ), cx, cy, 0);
@@ -94,7 +93,7 @@ public class TextField extends KeyHolderElement {
         if (visibility != Visibility.ONLY_CHILDREN) {
             boolean focused = parentPanel != null && parentPanel.focused == this;
 
-            RenderUtils.fillRoundShadow(context,
+            fillRoundShadow(context,
                     x + marginLeft - paddingLeft - borderThickness,
                     y + marginTop - paddingTop - borderThickness,
                     width + paddingLeft + paddingRight + borderThickness * 2,
@@ -104,7 +103,7 @@ public class TextField extends KeyHolderElement {
                     shadowColor.getHexCustomOpacity(opacity),
                     shadowColor.getHexCustomAlpha(0)
             );
-            RenderUtils.fillRoundShadow(context,
+            fillRoundShadow(context,
                     x + marginLeft - paddingLeft,
                     y + marginTop - paddingTop,
                     width + paddingLeft + paddingRight,
@@ -114,7 +113,7 @@ public class TextField extends KeyHolderElement {
                     focused ? borderColor.getHexCustomOpacity(opacity) : borderColor.darker().getHexCustomOpacity(opacity),
                     focused ? borderColor.getHexCustomOpacity(opacity) : borderColor.darker().getHexCustomOpacity(opacity)
             );
-            RenderUtils.fillRoundRect(context,
+            fillRoundRect(context,
                     x + marginLeft - paddingLeft,
                     y + marginTop - paddingTop,
                     width + paddingLeft + paddingRight,
@@ -123,7 +122,7 @@ public class TextField extends KeyHolderElement {
                     focused ? fillColor.getHexCustomOpacity(opacity) : fillColor.darker().getHexCustomOpacity(opacity)
             );
             if (backgroundImage != null) {
-                RenderUtils.drawRoundTexture(context,
+                drawRoundTexture(context,
                         backgroundImage,
                         x + marginLeft - paddingLeft,
                         y + marginTop - paddingTop,
@@ -154,7 +153,7 @@ public class TextField extends KeyHolderElement {
                 context.disableScissor();
         }
 
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
 
         if (mouseDown)
             pollMouseSelection(mx, my);
@@ -201,7 +200,7 @@ public class TextField extends KeyHolderElement {
             }
             else if (key == GLFW.GLFW_KEY_V && parentPanel.ctrlKeyPressed) {
                 editHistory.push();
-                String s = mc.keyboard.getClipboard().replace('\n', ' ');
+                String s = mc.keyboardHandler.getClipboard().replace('\n', ' ');
                 boolean sel = isSelecting();
                 int len = s.length();
 
@@ -220,7 +219,7 @@ public class TextField extends KeyHolderElement {
                 }
             }
             else if (key == GLFW.GLFW_KEY_C && parentPanel.ctrlKeyPressed) {
-                mc.keyboard.setClipboard(getSelectedText());
+                mc.keyboardHandler.setClipboard(getSelectedText());
             }
             else if (key == GLFW.GLFW_KEY_Z && parentPanel.ctrlKeyPressed) {
                 editHistory.revertLastEdit();
@@ -480,7 +479,7 @@ public class TextField extends KeyHolderElement {
         }
 
         @Override
-        public void onRender(DrawContext context, int mx, int my, float delta) {
+        public void onRender(GuiGraphicsExtractor context, int mx, int my, float delta) {
             int x = getPosX();
             int y = getPosY();
 

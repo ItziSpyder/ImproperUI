@@ -9,8 +9,8 @@ import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.render.math.Dimensions;
 import io.github.itzispyder.improperui.util.StringUtils;
 import io.github.itzispyder.improperui.util.render.RenderUtils;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Function;
@@ -46,17 +46,17 @@ public class TextBox extends KeyHolderElement {
     }
 
     @Override
-    public void onRender(DrawContext context, int mx, int my, float delta) {
+    public void onRender(GuiGraphicsExtractor context, int mx, int my, float delta) {
         int x = getPosX();
         int y = getPosY();
 
         if (visibility == Visibility.INVISIBLE)
             return;
 
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
         int cx = x + width / 2;
         int cy = y + height / 2;
-        context.getMatrices().rotateAbout((float)Math.toRadians(rotateZ), cx, cy);
+        context.pose().rotateAbout((float)Math.toRadians(rotateZ), cx, cy);
 //        context.getMatrices().multiply(RotationAxis.POSITIVE_X.rotationDegrees(rotateX), cx, cy, 0);
 //        context.getMatrices().multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotateY), cx, cy, 0);
 //        context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotateZ), cx, cy, 0);
@@ -105,11 +105,11 @@ public class TextBox extends KeyHolderElement {
 
             if (parentPanel != null) {
                 String text = innerText != null ? innerText : "";
-                while (!text.isEmpty() && mc.textRenderer.getWidth(text) * 0.9F > width - height - 4) {
+                while (!text.isEmpty() && mc.font.width(text) * 0.9F > width - height - 4) {
                     text = text.substring(1);
                 }
 
-                Text display = Text.of(text);
+                Component display = Component.nullToEmpty(text);
                 if (!queryMatchesPattern())
                     RenderUtils.drawDefaultScaledText(context, display, x + height / 2 + 2, y + height / 3, 0.9F, false, Color.ORANGE.getHexCustomOpacity(opacity));
                 else if (parentPanel.focused == this && !text.isEmpty())
@@ -117,10 +117,10 @@ public class TextBox extends KeyHolderElement {
                 else if (!text.isEmpty())
                     RenderUtils.drawDefaultScaledText(context, display, x + height / 2 + 2, y + height / 3, 0.9F, false, textColor.darker().darker().getHexCustomOpacity(opacity));
                 else
-                    RenderUtils.drawDefaultScaledText(context, Text.of(getDefaultText()), x + height / 2 + 2, y + height / 3, 0.9F, false, textColor.darker().darker().getHexCustomOpacity(opacity));
+                    RenderUtils.drawDefaultScaledText(context, Component.nullToEmpty(getDefaultText()), x + height / 2 + 2, y + height / 3, 0.9F, false, textColor.darker().darker().getHexCustomOpacity(opacity));
 
                 if (selectionBlinking) {
-                    int tx = (int)(x + height / 2 + 2 + mc.textRenderer.getWidth(text) * 0.9);
+                    int tx = (int)(x + height / 2 + 2 + mc.font.width(text) * 0.9);
                     int ty = y + 2;
                     RenderUtils.drawVerLine(context, tx, ty, height - 4, 0xE0FFFFFF);
                 }
@@ -168,7 +168,7 @@ public class TextBox extends KeyHolderElement {
                 onInput(input -> input.concat(" "), true);
             }
             else if (key == GLFW.GLFW_KEY_V && parentPanel.ctrlKeyPressed) {
-                onInput(input -> input.concat(mc.keyboard.getClipboard()), true);
+                onInput(input -> input.concat(mc.keyboardHandler.getClipboard()), true);
             }
             else if (typed != null){
                 onInput(input -> input.concat(parentPanel.shiftKeyPressed ? StringUtils.keyPressWithShift(typed) : typed), true);

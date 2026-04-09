@@ -29,7 +29,7 @@ public class HyperLink extends Element {
     public void style() {
         super.style();
         innerText = innerText == null ? link : innerText;
-        width = mc.textRenderer.getWidth(innerText == null ? "" : innerText);
+        width = mc.font.width(innerText == null ? "" : innerText);
 
         if (selectStyle != null)
             selectStyle.innerText = innerText;
@@ -43,7 +43,7 @@ public class HyperLink extends Element {
     public void onLeftClick(int mx, int my, boolean release) {
         super.onLeftClick(mx, my, release);
         if (link != null && !link.trim().isEmpty() && !release) {
-            Util.getOperatingSystem().open(link);
+            Util.getPlatform().openUri(link);
         }
     }
 }
