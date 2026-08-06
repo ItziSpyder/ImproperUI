@@ -10,6 +10,7 @@ import io.github.itzispyder.improperui.util.render.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -21,6 +22,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class ImproperUIPanel extends Screen {
+
+    public static final int DEFAULT_SCANCODE = 42;
+    public static final int SCROLL_MULTIPLIER = 15;
 
     public Element selected, focused, hovered;
     public boolean shiftKeyPressed, altKeyPressed, ctrlKeyPressed;
@@ -169,6 +173,21 @@ public class ImproperUIPanel extends Screen {
             }
         }
         return true;
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+        if (event.button() == 0 && focused != null) {
+            focused.onDrag(event.x(), event.y());
+        }
+        return super.mouseDragged(event, dx, dy);
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent event) {
+        if (focused != null)
+            focused.onChar((char) event.codepoint());
+        return super.charTyped(event);
     }
 
     @Override

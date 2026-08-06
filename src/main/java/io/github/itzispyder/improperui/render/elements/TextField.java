@@ -2,80 +2,575 @@ package io.github.itzispyder.improperui.render.elements;
 
 import io.github.itzispyder.improperui.config.ConfigKey;
 import io.github.itzispyder.improperui.config.PropertyCache;
-import io.github.itzispyder.improperui.render.Element;
+import io.github.itzispyder.improperui.render.ImproperUIPanel;
 import io.github.itzispyder.improperui.render.KeyHolderElement;
-import io.github.itzispyder.improperui.render.constants.BackgroundClip;
 import io.github.itzispyder.improperui.render.constants.Visibility;
-import io.github.itzispyder.improperui.render.math.Dimensions;
-import io.github.itzispyder.improperui.script.ScriptParser;
 import io.github.itzispyder.improperui.util.MathUtils;
 import io.github.itzispyder.improperui.util.StringUtils;
+import io.github.itzispyder.improperui.util.misc.Pair;
+import io.github.itzispyder.improperui.util.render.RenderUtils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.util.FormattedCharSequence;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static io.github.itzispyder.improperui.util.render.RenderUtils.*;
 
 public class TextField extends KeyHolderElement {
 
-    public static final int CHAR_W = 4, CHAR_H = 6;
-    private int limitW, limitH;
-    private HistoryQueue editHistory;
-    private CharacterElement[][] chars;
-    private Point selStart, selEnd;
-    private int cursor, selectionBlink;
-    private boolean selectionBlinking, mouseDown;
+    private static final int UNDO_LIMIT = 100;
+    private static final int SEL_COLOR = 0xFF3B5EEB; // Fully opaque color so text highlight renders cleanly
+    private static final int CURSOR_COLOR = 0xE0FFFFFF;
 
-    public TextField(String innerText, int x, int y, int w, int h) {
-        super(x, y, Math.max(w, 50), Math.max(h, 18));
-        int addW = w % CHAR_W == 0 ? 0 : 1;
-        int addH = h % CHAR_H == 0 ? 0 : 1;
-        this.limitW = (int)(Math.floor(w / (double) CHAR_W) + addW) - 2;
-        this.limitH = (int)(Math.floor(h / (double) CHAR_H) + addH) - 2;
-        this.width = (limitW + 2) * CHAR_W;
-        this.height = (limitH + 2) * CHAR_H;
-        this.innerText = innerText;
-        this.chars = new CharacterElement[limitW][limitH];
-        this.updateInnerText();
-        this.selStart = new Point();
-        this.selEnd = new Point();
-        this.cursor = -1;
-        this.mouseDown = false;
-        this.editHistory = new HistoryQueue(100);
+    private int selectionStart, selectionEnd;
+    private final Point selectedStartPoint;
+    private int textY = 5, textHeight;
+    private boolean selectionBlinking, selectedAll;
+    private int selectionBlink;
+    private final ArrayDeque<Pair<String, Integer>> undoStack = new ArrayDeque<>();
+    private final ArrayDeque<Pair<String, Integer>> redoStack = new ArrayDeque<>();
+    private int preferredCol = -1;
+    private int dragAnchor = -1;
+    private Function<Integer, Boolean> keyInterceptor;
+    private Consumer<Boolean> onStateChanged;
+
+    private List<FormattedCharSequence> cachedRows = List.of();
+
+    public TextField(String preText, int x, int y, int width, int height) {
+        super(x, y, width, height);
+        this.selectedStartPoint = new Point();
+        this.innerText = preText;
+        this.resetSelection();
 
         queueProperty("inner-text: %s".formatted(innerText));
         queueProperty("size: %s %s".formatted(this.width, this.height));
         queueProperty("border: 1 0 white");
         queueProperty("background-color: dark_gray");
+        queueProperty("scrollable: true");
+    }
+
+    public TextField(int x, int y, int width, int height) {
+        this("", x, y, width, height);
     }
 
     public TextField() {
-        this("", 0, 0, 100, 18);
+        this("", 0, 0, 100, 15);
     }
 
     @Override
-    public void style() {
-        super.style();
-        int addW = width % CHAR_W == 0 ? 0 : 1;
-        int addH = height % CHAR_H == 0 ? 0 : 1;
-        this.limitW = (int)(Math.floor(width / (double) CHAR_W) + addW) - 2;
-        this.limitH = (int)(Math.floor(height / (double) CHAR_H) + addH) - 2;
-        this.width = (limitW + 2) * CHAR_W;
-        this.height = (limitH + 2) * CHAR_H;
-        this.chars = new CharacterElement[limitW][limitH];
-        this.updateInnerText();
-        this.selStart = new Point();
-        this.selEnd = new Point();
-        this.cursor = -1;
-        this.mouseDown = false;
-        this.editHistory = new HistoryQueue(100);
+    public void onLoadKey(PropertyCache cache, ConfigKey key) {
+        var property = cache.getProperty(key);
+        if (property != null)
+            innerText = property.getQuote();
     }
 
     @Override
-    public void onRender(GuiGraphicsExtractor context, int mx, int my, float delta) {
+    public void onSaveKey(PropertyCache cache, ConfigKey key) {
+        cache.setProperty(key, "\"%s\"".formatted(innerText), true);
+    }
+
+    private int lineStart(int pos) {
+        int i = Math.min(pos, innerText.length());
+        while (i > 0 && innerText.charAt(i - 1) != '\n') i--;
+        return i;
+    }
+
+    private int lineEnd(int pos) {
+        int i = Math.min(pos, innerText.length());
+        while (i < innerText.length() && innerText.charAt(i) != '\n') i++;
+        return i;
+    }
+
+    private int prevWordBoundary(int pos) {
+        int i = pos;
+        while (i > 0 && Character.isWhitespace(innerText.charAt(i - 1))) i--;
+        while (i > 0 && !Character.isWhitespace(innerText.charAt(i - 1))) i--;
+        return i;
+    }
+
+    private int nextWordBoundary(int pos) {
+        int i = pos;
+        while (i < innerText.length() && !Character.isWhitespace(innerText.charAt(i))) i++;
+        while (i < innerText.length() && Character.isWhitespace(innerText.charAt(i))) i++;
+        return i;
+    }
+
+    private boolean hasRange() {
+        return !selectedAll && selectionStart != selectionEnd;
+    }
+
+    private int selMin() {
+        return Math.min(selectionStart, selectionEnd);
+    }
+
+    private int selMax() {
+        return Math.max(selectionStart, selectionEnd);
+    }
+
+    private boolean toggleComment() {
+        int from = selectedAll ? 0 : selMin();
+        int to = selectedAll ? innerText.length() : selMax();
+        int blockStart = lineStart(from);
+        int blockEnd = lineEnd(to);
+        boolean collapsed = !selectedAll && !hasRange();
+
+        String block = innerText.substring(blockStart, blockEnd);
+        String[] lines = block.split("\n", -1);
+
+        boolean allCommented = true;
+        for (String line : lines)
+            if (!line.isBlank() && !line.startsWith("//")) {
+                allCommented = false;
+                break;
+            }
+
+        StringBuilder rebuilt = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            if (!line.isBlank())
+                line = allCommented ? line.substring(line.startsWith("// ") ? 3 : 2) : "// " + line;
+            rebuilt.append(line);
+            if (i < lines.length - 1) rebuilt.append("\n");
+        }
+
+        pushUndo();
+        int savedStart = selectionStart;
+        innerText = innerText.substring(0, blockStart) + rebuilt + innerText.substring(blockEnd);
+
+        if (collapsed) {
+            int delta = rebuilt.length() - block.length();
+            selectionStart = selectionEnd = MathUtils.clamp(savedStart + delta, blockStart, blockStart + rebuilt.length());
+        } else {
+            selectionStart = blockStart;
+            selectionEnd = blockStart + rebuilt.length();
+        }
+        updateSelection();
+        preferredCol = -1;
+        return true;
+    }
+
+    private void deleteRange() {
+        pushUndo();
+        int lo = selectedAll ? 0 : selMin();
+        int hi = selectedAll ? innerText.length() : selMax();
+        innerText = innerText.substring(0, lo) + innerText.substring(hi);
+        selectionStart = selectionEnd = lo;
+        selectedAll = false;
+        updateSelection();
+    }
+
+    private void pushUndo() {
+        if (!undoStack.isEmpty() && undoStack.peek().left.equals(innerText)) return;
+        undoStack.push(Pair.of(innerText, selectionStart));
+        redoStack.clear();
+        while (undoStack.size() > UNDO_LIMIT) undoStack.removeLast();
+    }
+
+    @Override
+    public void onChar(char chr) {
+        if (parentPanel == null || parentPanel.focused != this) return;
+        if (Character.isISOControl(chr)) return;
+
+        char closing = matchingClose(chr);
+
+        if (closing != 0 && (hasRange() || selectedAll)) {
+            wrapSelection(chr, closing);
+            preferredCol = -1;
+            fireChanged(true);
+            return;
+        }
+
+        if (hasRange() || selectedAll) deleteRange();
+
+        if (isClosingBracket(chr) && selectionStart < innerText.length() && innerText.charAt(selectionStart) == chr) {
+            shiftRight();
+            preferredCol = -1;
+            fireChanged(true);
+            return;
+        }
+
+        if (closing != 0) {
+            final char c = closing;
+            onInput(input -> insertInput(chr + String.valueOf(c)));
+            shiftRight();
+            preferredCol = -1;
+            fireChanged(true);
+            return;
+        }
+
+        onInput(input -> insertInput(String.valueOf(chr)));
+        shiftRight();
+        preferredCol = -1;
+        fireChanged(true);
+    }
+
+    private static char matchingClose(char open) {
+        return switch (open) {
+            case '(' -> ')';
+            case '[' -> ']';
+            case '{' -> '}';
+            default -> 0;
+        };
+    }
+
+    private static boolean isClosingBracket(char c) {
+        return c == ')' || c == ']' || c == '}';
+    }
+
+    private void wrapSelection(char open, char close) {
+        int lo = selectedAll ? 0 : selMin();
+        int hi = selectedAll ? innerText.length() : selMax();
+        pushUndo();
+        innerText = innerText.substring(0, lo) + open + innerText.substring(lo, hi) + close + innerText.substring(hi);
+        selectionStart = lo + 1;
+        selectionEnd = hi + 1;
+        selectedAll = false;
+        updateSelection();
+    }
+
+    @Override
+    public void onKey(int key, int scan, boolean release) {
+        super.onKey(key, scan, release);
+
+        if (parentPanel == null || parentPanel.focused != this || release)
+            return;
+        if (keyInterceptor != null && keyInterceptor.apply(key))
+            return;
+
+        if (handleKeyInner(key))
+            fireChanged(key == GLFW.GLFW_KEY_BACKSPACE || key == GLFW.GLFW_KEY_DELETE);
+    }
+
+    private boolean handleKeyInner(int key) {
+        if (key == GLFW.GLFW_KEY_ESCAPE) {
+            if (hasRange() || selectedAll) {
+                selectedAll = false;
+                selectionEnd = selectionStart;
+                return true;
+            }
+            parentPanel.focused = null;
+            return true;
+        }
+
+        if (parentPanel.ctrlKeyPressed) {
+            switch (key) {
+                case GLFW.GLFW_KEY_A -> {
+                    selectedAll = true;
+                    preferredCol = -1;
+                    return true;
+                }
+                case GLFW.GLFW_KEY_C -> {
+                    if (selectedAll) mc.keyboardHandler.setClipboard(innerText);
+                    else if (hasRange()) mc.keyboardHandler.setClipboard(innerText.substring(selMin(), selMax()));
+                    return true;
+                }
+                case GLFW.GLFW_KEY_X -> {
+                    if (selectedAll) {
+                        mc.keyboardHandler.setClipboard(innerText);
+                        clear();
+                    } else if (hasRange()) {
+                        mc.keyboardHandler.setClipboard(innerText.substring(selMin(), selMax()));
+                        deleteRange();
+                    }
+                    preferredCol = -1;
+                    return true;
+                }
+                case GLFW.GLFW_KEY_V -> {
+                    if (hasRange() || selectedAll) deleteRange();
+                    onInput(input -> insertInput(mc.keyboardHandler.getClipboard()));
+                    shiftRight();
+                    preferredCol = -1;
+                    return true;
+                }
+                case GLFW.GLFW_KEY_Z -> {
+                    if (!undoStack.isEmpty()) {
+                        redoStack.push(Pair.of(innerText, selectionStart));
+                        Pair<String, Integer> state = undoStack.pop();
+                        innerText = state.left;
+                        selectionStart = selectionEnd = MathUtils.clamp(state.right, 0, innerText.length());
+                        updateSelection();
+                    }
+                    preferredCol = -1;
+                    return true;
+                }
+                case GLFW.GLFW_KEY_Y -> {
+                    if (!redoStack.isEmpty()) {
+                        undoStack.push(Pair.of(innerText, selectionStart));
+                        Pair<String, Integer> state = redoStack.pop();
+                        innerText = state.left;
+                        selectionStart = selectionEnd = MathUtils.clamp(state.right, 0, innerText.length());
+                        updateSelection();
+                    }
+                    preferredCol = -1;
+                    return true;
+                }
+                case GLFW.GLFW_KEY_D -> {
+                    int ls = lineStart(selectionStart);
+                    int le = lineEnd(selectionStart);
+                    String line = innerText.substring(ls, le);
+                    pushUndo();
+                    String ins = "\n" + line;
+                    innerText = innerText.substring(0, le) + ins + innerText.substring(le);
+                    selectionStart = selectionEnd = le + ins.length();
+                    updateSelection();
+                    preferredCol = -1;
+                    return true;
+                }
+                case GLFW.GLFW_KEY_SLASH -> {
+                    return toggleComment();
+                }
+                case GLFW.GLFW_KEY_LEFT -> {
+                    selectionStart = selectionEnd = prevWordBoundary(selectionStart);
+                    selectedAll = false;
+                    updateSelection();
+                    preferredCol = -1;
+                    return true;
+                }
+                case GLFW.GLFW_KEY_RIGHT -> {
+                    selectionStart = selectionEnd = nextWordBoundary(selectionStart);
+                    selectedAll = false;
+                    updateSelection();
+                    preferredCol = -1;
+                    return true;
+                }
+                case GLFW.GLFW_KEY_BACKSPACE -> {
+                    if (hasRange() || selectedAll) {
+                        deleteRange();
+                        preferredCol = -1;
+                        return true;
+                    }
+                    int wordStart = prevWordBoundary(selectionStart);
+                    if (wordStart < selectionStart) {
+                        pushUndo();
+                        innerText = innerText.substring(0, wordStart) + innerText.substring(selectionStart);
+                        selectionStart = selectionEnd = wordStart;
+                        updateSelection();
+                    }
+                    preferredCol = -1;
+                    return true;
+                }
+            }
+        }
+
+        switch (key) {
+            case GLFW.GLFW_KEY_BACKSPACE -> {
+                if (hasRange() || selectedAll) {
+                    deleteRange();
+                    preferredCol = -1;
+                    return true;
+                }
+                if (selectionStart > 0 && selectionStart < innerText.length()) {
+                    char expectedClose = matchingClose(innerText.charAt(selectionStart - 1));
+                    if (expectedClose != 0 && innerText.charAt(selectionStart) == expectedClose) {
+                        pushUndo();
+                        innerText = innerText.substring(0, selectionStart - 1) + innerText.substring(selectionStart + 1);
+                        selectionStart = selectionEnd = selectionStart - 1;
+                        updateSelection();
+                        preferredCol = -1;
+                        return true;
+                    }
+                }
+                onInput(cur -> selectionStart > 0 && !cur.isEmpty()
+                        ? cur.substring(0, selectionStart - 1) + cur.substring(selectionStart)
+                        : cur);
+                shiftLeft();
+                preferredCol = -1;
+                return true;
+            }
+            case GLFW.GLFW_KEY_DELETE -> {
+                if (hasRange() || selectedAll) {
+                    deleteRange();
+                    preferredCol = -1;
+                    return true;
+                }
+                onInput(input -> StringUtils.insertString(innerText, selectionStart + 1, null));
+                preferredCol = -1;
+                return true;
+            }
+            case GLFW.GLFW_KEY_ENTER -> {
+                if (hasRange() || selectedAll) deleteRange();
+                int ls = lineStart(selectionStart);
+                String before = innerText.substring(ls, selectionStart);
+                int spaces = 0;
+                while (spaces < before.length() && before.charAt(spaces) == ' ') spaces++;
+
+                boolean betweenBraces = selectionStart > 0
+                        && selectionStart < innerText.length()
+                        && innerText.charAt(selectionStart - 1) == '{'
+                        && innerText.charAt(selectionStart) == '}';
+
+                pushUndo();
+                if (betweenBraces) {
+                    String inner = "\n" + " ".repeat(spaces + 4);
+                    String outer = "\n" + " ".repeat(spaces);
+                    innerText = innerText.substring(0, selectionStart) + inner + outer + innerText.substring(selectionStart);
+                    selectionStart = selectionEnd = selectionStart + inner.length();
+                } else {
+                    String indent = "\n" + " ".repeat(spaces);
+                    innerText = innerText.substring(0, selectionStart) + indent + innerText.substring(selectionStart);
+                    selectionStart = selectionEnd = selectionStart + indent.length();
+                }
+                updateSelection();
+                preferredCol = -1;
+                return true;
+            }
+            case GLFW.GLFW_KEY_TAB -> {
+                if (hasRange() || selectedAll) deleteRange();
+                onInput(input -> insertInput("    "));
+                for (int i = 0; i < 4; i++) shiftRight();
+                preferredCol = -1;
+                return true;
+            }
+            case GLFW.GLFW_KEY_LEFT -> {
+                if (hasRange() || selectedAll) {
+                    selectionStart = selectionEnd = selMin();
+                    selectedAll = false;
+                    updateSelection();
+                } else shiftLeft();
+                preferredCol = -1;
+                return true;
+            }
+            case GLFW.GLFW_KEY_RIGHT -> {
+                if (hasRange() || selectedAll) {
+                    selectionStart = selectionEnd = selMax();
+                    selectedAll = false;
+                    updateSelection();
+                } else shiftRight();
+                preferredCol = -1;
+                return true;
+            }
+            case GLFW.GLFW_KEY_HOME -> {
+                selectionStart = selectionEnd = lineStart(selectionStart);
+                selectedAll = false;
+                updateSelection();
+                preferredCol = -1;
+                return true;
+            }
+            case GLFW.GLFW_KEY_END -> {
+                selectionStart = selectionEnd = lineEnd(selectionStart);
+                selectedAll = false;
+                updateSelection();
+                preferredCol = -1;
+                return true;
+            }
+            case GLFW.GLFW_KEY_UP -> {
+                navigateVertical(-1);
+                return true;
+            }
+            case GLFW.GLFW_KEY_DOWN -> {
+                navigateVertical(1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void navigateVertical(int dir) {
+        selectedAll = false;
+        int col = preferredCol >= 0 ? preferredCol : selectionStart - lineStart(selectionStart);
+        preferredCol = col;
+
+        String[] lines = innerText.split("\n", -1);
+        int charPos = 0, curLine = 0;
+        for (int i = 0; i < lines.length; i++) {
+            if (charPos + lines[i].length() >= selectionStart) {
+                curLine = i;
+                break;
+            }
+            charPos += lines[i].length() + 1;
+        }
+
+        int targetLine = MathUtils.clamp(curLine + dir, 0, lines.length - 1);
+        int targetPos = 0;
+        for (int i = 0; i < targetLine; i++) targetPos += lines[i].length() + 1;
+        targetPos += Math.min(col, lines[targetLine].length());
+        selectionStart = selectionEnd = targetPos;
+        updateSelection();
+    }
+
+    @Override
+    public void onLeftClick(int mx, int my, boolean release) {
+        super.onLeftClick(mx, my, release);
+        if (release)
+            mouseReleased(mx, my, 0);
+        else
+            mouseClicked(mx, my, 0);
+    }
+
+    public void mouseClicked(double mouseX, double mouseY, int button) {
+        selectedAll = false;
+
+        if (button == 0 && getHitboxDimensions().contains(mouseX, mouseY)) {
+            int pos = pixelToContentPos(mouseX, mouseY);
+            selectionStart = selectionEnd = pos;
+            dragAnchor = pos;
+            preferredCol = -1;
+            updateSelection();
+            if (parentPanel != null) {
+                parentPanel.focused = this;
+                parentPanel.selected = this;
+            }
+            fireChanged(false);
+        }
+    }
+
+    public void mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0) dragAnchor = -1;
+    }
+
+    @Override
+    public void onDrag(double mouseX, double mouseY) {
+        if (dragAnchor < 0) return;
+        int pos = pixelToContentPos(mouseX, mouseY);
+        selectionStart = dragAnchor;
+        selectionEnd = pos;
+        selectedAll = false;
+        updateSelection();
+    }
+
+    private int pixelToContentPos(double mouseX, double mouseY) {
+        List<FormattedCharSequence> rows = cachedRows.isEmpty()
+                ? mc.font.split(FormattedText.of(innerText), width - 10)
+                : cachedRows;
+        int targetRow = MathUtils.clamp((int) ((mouseY - (getPosY() + textY)) / 9), 0, Math.max(0, rows.size() - 1));
+
+        int pos = 0, row = 0, rowStart = 0;
+        while (pos <= innerText.length() && row < targetRow) {
+            int next = pos + 1;
+            List<FormattedCharSequence> r = mc.font.split(FormattedText.of(innerText.substring(0, next)), width - 10);
+            if (r.size() > row + 1) {
+                row++;
+                rowStart = next;
+            }
+            pos = next;
+        }
+
+        int best = rowStart;
+        double bestDist = Double.MAX_VALUE;
+        double targetX = mouseX - (getPosX() + 5);
+
+        for (int p = rowStart; p <= innerText.length(); p++) {
+            List<FormattedCharSequence> r = mc.font.split(FormattedText.of(innerText.substring(0, p)), width - 10);
+            if (r.size() > targetRow + 1) break;
+            double cx = r.isEmpty() ? 0 : mc.font.width(r.get(Math.min(targetRow, r.size() - 1)));
+            double dist = Math.abs(cx - targetX);
+            if (dist <= bestDist) {
+                bestDist = dist;
+                best = p;
+            }
+        }
+
+        return MathUtils.clamp(best, 0, innerText.length());
+    }
+
+    @Override
+    public void onRender(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         int x = getPosX();
         int y = getPosY();
 
@@ -86,9 +581,6 @@ public class TextField extends KeyHolderElement {
         int cx = x + width / 2;
         int cy = y + height / 2;
         context.pose().rotateAbout((float)Math.toRadians(rotateZ), cx, cy);
-//        context.getMatrices().multiply(RotationAxis.POSITIVE_X.rotationDegrees(rotateX), cx, cy, 0);
-//        context.getMatrices().multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotateY), cx, cy, 0);
-//        context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotateZ), cx, cy, 0);
 
         if (visibility != Visibility.ONLY_CHILDREN) {
             boolean focused = parentPanel != null && parentPanel.focused == this;
@@ -133,440 +625,195 @@ public class TextField extends KeyHolderElement {
             }
         }
 
+        context.enableScissor(x, y, x + width, y + height);
+
         if (visibility != Visibility.ONLY_SELF) {
-            boolean shouldClip = backgroundClip != BackgroundClip.NONE;
-
-            if (shouldClip) {
-                Dimensions shape;
-                switch (backgroundClip) {
-                    case PADDING -> shape = getPaddedDimensions();
-                    case BORDER -> shape = getBorderedDimensions();
-                    case MARGIN -> shape = getMarginalDimensions();
-                    default -> shape = getDimensions();
-                }
-                context.enableScissor(shape.x, shape.y, shape.x + shape.width, shape.y + shape.height);
-            }
-
-            onRenderChildren(context, mx, my, delta);
-
-            if (shouldClip)
-                context.disableScissor();
+            onRenderChildren(context, mouseX, mouseY, delta);
         }
 
+        List<FormattedCharSequence> text = mc.font.split(FormattedText.of(innerText), width - 10);
+        cachedRows = text;
+        textHeight = text.size() * 9;
+
+        int caret = y + textY;
+
+        // Render selection highlight BEHIND the text lines
+        if (hasRange()) {
+            renderRangeHighlight(context, text, x, y);
+        }
+
+        if (selectedAll) {
+            for (FormattedCharSequence line : text) {
+                RenderUtils.fillRect(context, x + 5, caret - 1, mc.font.width(line), 9, SEL_COLOR);
+                caret += 9;
+            }
+            caret = y + textY;
+        }
+
+        // Render text on top
+        for (FormattedCharSequence line : text) {
+            context.text(mc.font, line, x + 5, caret, textColor.getHex(), false);
+            caret += 9;
+        }
+
+        if (selectionBlinking && parentPanel != null && parentPanel.focused == this) {
+            RenderUtils.drawVerLine(context, x + 5 + selectedStartPoint.x, y - 1 + textY + selectedStartPoint.y, 9, CURSOR_COLOR);
+        }
+
+        context.disableScissor();
         context.pose().popMatrix();
-
-        if (mouseDown)
-            pollMouseSelection(mx, my);
     }
 
-    @Override
-    public void onKey(int key, int scan, boolean release) {
-        if (parentPanel != null && !release) {
-            String typed = GLFW.glfwGetKeyName(key, scan);
+    private void renderRangeHighlight(GuiGraphicsExtractor context, List<FormattedCharSequence> rows, int x, int y) {
+        Point startPt = computePointFor(selMin());
+        Point endPt = computePointFor(selMax());
+        int startRow = startPt.y / 9;
+        int endRow = endPt.y / 9;
 
-            if (key == GLFW.GLFW_KEY_ESCAPE) {
-                if (isSelecting())
-                    updateCursor();
-                else
-                    parentPanel.focused = null;
-            }
-            else if (key == GLFW.GLFW_KEY_A && parentPanel.ctrlKeyPressed) {
-                cursor = -1;
-                selStart.setLocation(0, 0);
-                selEnd.setLocation(limitW, limitH);
-            }
-            else if (key == GLFW.GLFW_KEY_BACKSPACE) {
-                editHistory.push();
-                if (isSelecting()) {
-                    deleteSelectedText();
-                    setCursor(cursor - 1);
-                    return;
-                }
-                onInput(input -> StringUtils.insertString(innerText, cursor + 1, null), false);
-            }
-            else if (key == GLFW.GLFW_KEY_DELETE) {
-                editHistory.push();
-                if (isSelecting()) {
-                    deleteSelectedText();
-                    setCursor(cursor - 1);
-                    return;
-                }
-                onInput(input -> StringUtils.insertString(innerText, cursor + 2, null), false);
-                setCursor(cursor + 1);
-            }
-            else if (key == GLFW.GLFW_KEY_SPACE) {
-                editHistory.push();
-                onInput(input -> StringUtils.insertString(innerText, cursor + 1, " "), true);
-            }
-            else if (key == GLFW.GLFW_KEY_V && parentPanel.ctrlKeyPressed) {
-                editHistory.push();
-                String s = mc.keyboardHandler.getClipboard().replace('\n', ' ');
-                boolean sel = isSelecting();
-                int len = s.length();
-
-                if (sel) {
-                    for (int i = len - 1; i >= 0; i--) {
-                        char c = s.charAt(i);
-                        onInput(input -> {
-                            setCursor(cursor - 1);
-                            return StringUtils.insertString(innerText, cursor + 1, String.valueOf(c));
-                        }, true);
-                    }
-                }
-                else {
-                    for (char c : s.toCharArray())
-                        onInput(input -> StringUtils.insertString(innerText, cursor + 1, String.valueOf(c)), true);
-                }
-            }
-            else if (key == GLFW.GLFW_KEY_C && parentPanel.ctrlKeyPressed) {
-                mc.keyboardHandler.setClipboard(getSelectedText());
-            }
-            else if (key == GLFW.GLFW_KEY_Z && parentPanel.ctrlKeyPressed) {
-                editHistory.revertLastEdit();
-            }
-            else if (key == GLFW.GLFW_KEY_LEFT) {
-                setCursor(cursor - 1);
-                if (parentPanel.shiftKeyPressed)
-                    selEnd.setLocation(getCursor());
-                else
-                    updateCursor();
-            }
-            else if (key == GLFW.GLFW_KEY_RIGHT) {
-                setCursor(cursor + 1);
-                if (parentPanel.shiftKeyPressed)
-                    selEnd.setLocation(getCursor());
-                else
-                    updateCursor();
-            }
-            else if (key == GLFW.GLFW_KEY_UP) {
-                var c = getCursor();
-                setCursor(c.x - 1, c.y - 1);
-                if (parentPanel.shiftKeyPressed)
-                    selEnd.setLocation(getCursor());
-                else
-                    updateCursor();
-            }
-            else if (key == GLFW.GLFW_KEY_DOWN) {
-                var c = getCursor();
-                setCursor(c.x - 1, c.y + 1);
-                if (parentPanel.shiftKeyPressed)
-                    selEnd.setLocation(getCursor());
-                else
-                    updateCursor();
-            }
-            else if (typed != null) {
-                editHistory.push();
-                String s = parentPanel.shiftKeyPressed ? StringUtils.keyPressWithShift(typed) : typed;
-                boolean sel = isSelecting();
-
-                onInput(input -> {
-                    if (sel)
-                        setCursor(cursor - 1);
-                    return StringUtils.insertString(innerText, cursor + 1, s);
-                }, true);
-            }
-        }
-
-        var configKey = getConfigKey();
-        if (configKey != null && release)
-            onSaveKey(ScriptParser.getCache(configKey.modId()), configKey);
-    }
-
-    public void onInput(Function<String, String> factory, boolean append) {
-        if (cursor + 1 >= limitW * limitH && append)
-            return;
-
-        deleteSelectedText();
-        String typed = factory.apply(innerText);
-        if (typed.length() > limitW * limitH && append)
-            return;
-
-        innerText = typed;
-        updateInnerText();
-        cursor += append ? 1 : -1;
-        cursor = MathUtils.clamp(cursor, -1, limitW * limitH - 1);
-        updateCursor();
-    }
-
-
-    @Override
-    public void onLeftClick(int mx, int my, boolean release) {
-        super.onLeftClick(mx, my, release);
-        this.mouseDown = !release;
-
-        for (Element child : getChildren()) {
-            if (child.getHitboxDimensions().contains(mx, my)) {
-                child.onLeftClick(mx, my, release);
-                break;
-            }
+        for (int row = startRow; row <= endRow; row++) {
+            int rx0 = (row == startRow) ? startPt.x : 0;
+            int rx1 = (row == endRow) ? endPt.x : (row < rows.size() ? mc.font.width(rows.get(row)) : 0);
+            int ry = y + textY + (row * 9);
+            RenderUtils.fillRect(context, x + 5 + rx0, ry - 1, Math.max(1, rx1 - rx0), 9, SEL_COLOR);
         }
     }
 
-    @Override
-    public void onLoadKey(PropertyCache cache, ConfigKey key) {
-        var property = cache.getProperty(key);
-        if (property != null)
-            innerText = property.getQuote();
-    }
-
-    @Override
-    public void onSaveKey(PropertyCache cache, ConfigKey key) {
-        cache.setProperty(key, "\"%s\"".formatted(innerText), true);
-    }
-
-    private void pollMouseSelection(int mx, int my) {
-        CharacterElement ch = null;
-        for (int x = 0; x < limitW; x++) {
-            for (int y = 0; y < limitH; y++) {
-                var c = chars[x][y];
-                if (c != null && c.getHitboxDimensions().contains(mx, my)) {
-                    ch = c;
-                    break;
-                }
-            }
-        }
-        if (ch != null) {
-            selEnd.setLocation(ch.idx + (selEnd.x >= selStart.x ? 1 : 0), ch.idy);
-            setCursor(selEnd.x - 1, selEnd.y);
-        }
-    }
-
-    public String getInnerText() {
-        return innerText;
-    }
-
-    public void setInnerText(String innerText) {
-        this.innerText = innerText;
-        updateInnerText();
-    }
-
-    private void updateInnerText() {
-        this.clearChars();
-
-        int len = innerText.length();
-        int cx = 0;
-        int cy = 0;
-
-        for (int i = 0; i < len; i++) {
-            char c = innerText.charAt(i);
-
-            if (cx < limitW) {
-                var che = new CharacterElement(i, cx, cy, String.valueOf(c), cx * CHAR_W + CHAR_W, cy * CHAR_H + CHAR_H);
-                chars[cx][cy] = che;
-                this.addChild(che);
-                cx++;
-
-                if (cx >= limitW) {
-                    cx = 0;
-                    cy++;
-                }
-            }
-        }
-    }
-
-    public Point getCursor() {
-        int cx = 0;
-        int cy = 0;
-
-        for (int i = 0; i < (cursor + 1); i++) {
-            if (cx < limitW) {
-                cx++;
-
-                if (cx >= limitW) {
-                    cx = 0;
-                    cy++;
-                }
-            }
-        }
-        return new Point(cx, cy);
-    }
-
-    public String getSelectedText() {
-        StringBuilder b = new StringBuilder();
-        for (int y = 0; y < limitH; y++) {
-            for (int x = 0; x < limitW; x++) {
-                var c = chars[x][y];
-                if (c != null && c.isSelected())
-                    b.append(c.ch);
-            }
-        }
-        return b.toString();
-    }
-
-    public void deleteSelectedText() {
-        if (selStart.equals(selEnd))
-            return;
-
-        int x, y, s1, s2;
-        x = MathUtils.clamp(selStart.x, 0, limitW);
-        y = MathUtils.clamp(selStart.y, 0, limitH);
-        s1 = MathUtils.clamp(limitW * y + x, 0, innerText.length());
-        x = MathUtils.clamp(selEnd.x, 0, limitW);
-        y = MathUtils.clamp(selEnd.y, 0, limitH);
-        s2 = MathUtils.clamp(limitW * y + x, 0, innerText.length());
-
-        if (s1 == s2)
-            return;
-
-        this.innerText = innerText.substring(0, Math.min(s1, s2)) + innerText.substring(Math.max(s1, s2));
-        updateInnerText();
-        this.setCursor(Math.min(s1, s2));
-        updateCursor();
-    }
-
-    public boolean isSelecting() {
-        return !selStart.equals(selEnd);
-    }
-
-    public void setCursor(int x, int y) {
-        x = MathUtils.clamp(x, 0, limitW);
-        y = MathUtils.clamp(y, 0, limitH);
-        this.setCursor(limitW * y + x);
-    }
-
-    public void setCursor(int cursor) {
-        this.cursor = MathUtils.clamp(cursor, -1, innerText.length() - 1);
-    }
-
-    public CharacterElement getCursorChar() {
-        var c = getCursor();
-        return chars[c.x][c.y];
-    }
-
-    private void updateCursor() {
-        this.selStart.setLocation(getCursor());
-        this.selEnd.setLocation(selStart);
-    }
-
-    private void clearChars() {
-        for (int x = 0; x < limitW; x++) {
-            for (int y = 0; y < limitH; y++) {
-                chars[x][y] = null;
-            }
-        }
-        this.clearChildren();
+    private Point computePointFor(int pos) {
+        String sub = innerText.substring(0, MathUtils.clamp(pos, 0, innerText.length()));
+        List<FormattedCharSequence> lines = mc.font.split(FormattedText.of(sub), width - 10);
+        if (lines == null || lines.isEmpty()) return new Point(0, 0);
+        return new Point(mc.font.width(lines.get(lines.size() - 1)), (lines.size() - 1) * 9);
     }
 
     @Override
     public void onTick() {
         super.onTick();
-
         if (parentPanel != null) {
             if (parentPanel.focused != this) {
                 selectionBlinking = false;
                 return;
             }
-
-            if (selectionBlink++ >= 20) {
-                selectionBlink = 0;
-            }
-            if (selectionBlink % 10 == 0 && selectionBlink > 0) {
-                selectionBlinking = !selectionBlinking;
-            }
+            if (selectionBlink++ >= 20) selectionBlink = 0;
+            if (selectionBlink % 10 == 0 && selectionBlink > 0) selectionBlinking = !selectionBlinking;
         }
     }
 
-    public class CharacterElement extends Element {
-        private final String ch;
-        public final int idc, idx, idy;
-
-        public CharacterElement(int idc, int idx, int idy, String ch, int x, int y) {
-            super(x, y, CHAR_W, CHAR_H);
-            this.ch = ch;
-            this.idc = idc;
-            this.idx = idx;
-            this.idy = idy;
+    public void onInput(Function<String, String> factory) {
+        if (selectedAll) {
+            innerText = "";
+            selectedAll = false;
+            resetSelection();
         }
+        pushUndo();
+        innerText = factory.apply(innerText);
+        updateSelection();
+    }
 
-        @Override
-        public void onRender(GuiGraphicsExtractor context, int mx, int my, float delta) {
-            int x = getPosX();
-            int y = getPosY();
+    public void shiftRight() {
+        selectionStart = MathUtils.clamp(selectionStart + 1, 0, innerText.length());
+        selectionEnd = selectionStart;
+        updateSelection();
+    }
 
-            boolean selected = this.isSelected();
-            if (selected) {
-                fillRect(context, x, y, width, height, 0xD000B7FF);
-            }
+    public void shiftLeft() {
+        selectionStart = MathUtils.clamp(selectionStart - 1, 0, innerText.length());
+        selectionEnd = selectionStart;
+        updateSelection();
+    }
 
-            if (TextField.this.parentPanel != null) {
-                if (TextField.this.parentPanel.altKeyPressed) {
-                    int color = 0xFFFFFFFF;
-                    if (idx == selStart.x && idy == selStart.y)
-                        color = 0xFF00FF00;
-                    if (idx == selEnd.x && idy == selEnd.y)
-                        color = 0xFFFF0000;
-                    drawBox(context, x, y, width, height, color);
-                }
-                int color = TextField.this.parentPanel.focused == TextField.this ?
-                        (selected ? 0xFF000000 : TextField.this.textColor.brighter().brighter().getHexCustomOpacity(opacity)) :
-                        TextField.this.textColor.getHexCustomOpacity(opacity);
-                drawDefaultCode(context, ch, x, y - 2, false, color);
-            }
+    public String insertInput(String input) {
+        return StringUtils.insertString(innerText, selectionStart, input);
+    }
 
-            if (selectionBlinking && cursor == idc) {
-                int tx = x + width;
-                int ty = y - 2;
-                drawVerLine(context, tx, ty, height + 2, 0xFFFFFFFF);
-            }
-        }
-
-        @Override
-        public void onLeftClick(int mx, int my, boolean release) {
-            if (release)
-                return;
-            setCursor(idx, idy);
-            updateCursor();
-            if (TextField.this.parentPanel != null) {
-                TextField.this.parentPanel.focused = TextField.this;
-                TextField.this.parentPanel.selected = TextField.this;
-            }
-        }
-
-        public boolean isSelected() {
-            int len = TextField.this.innerText == null ? 0 : TextField.this.innerText.length();
-            int s1 = MathUtils.clamp(limitW * selStart.y + selStart.x, 0, len);
-            int s2 = MathUtils.clamp(limitW * selEnd.y + selEnd.x, 0, len);
-            return idc >= Math.min(s1, s2) && idc < Math.max(s1, s2);
+    @Override
+    public void onScroll(int mx, int my, boolean up) {
+        super.onScroll(mx, my, up);
+        int amount = up ? 1 : -1;
+        for (int i = 0; i < ImproperUIPanel.SCROLL_MULTIPLIER; i++) {
+            textY = MathUtils.clamp(textY + amount, 5 - textHeight, 5);
         }
     }
 
-    public class HistoryQueue extends ArrayList<String> {
-        private final int limit;
+    public void resetSelection() {
+        selectionStart = selectionEnd = 0;
+        updateSelection();
+    }
 
-        public HistoryQueue(int limit) {
-            this.limit = limit;
+    public void updateSelection() {
+        String str = innerText.substring(0, MathUtils.clamp(selectionStart, 0, innerText.length()));
+        List<FormattedCharSequence> lines = mc.font.split(FormattedText.of(str), width - 10);
+        if (lines == null || lines.isEmpty()) {
+            selectedStartPoint.setLocation(0, 0);
+            return;
         }
+        selectedStartPoint.x = mc.font.width(lines.get(Math.max(0, lines.size() - 1)));
+        selectedStartPoint.y = lines.size() * 9 - 9;
+    }
 
-        public void pop() {
-            if (!this.isEmpty())
-                this.remove(this.size() - 1);
-        }
+    public String getWordBeforeCursor() {
+        int start = selectionStart;
+        while (start > 0 && innerText.charAt(start - 1) != '\n' && !Character.isWhitespace(innerText.charAt(start - 1)))
+            start--;
+        return innerText.substring(start, selectionStart);
+    }
 
-        public void push() {
-            if (innerText.isEmpty())
-                return;
-            this.add(innerText);
-            if (size() > limit)
-                this.remove(0);
-        }
+    public String getCurrentLine() {
+        return innerText.substring(lineStart(selectionStart), lineEnd(selectionStart));
+    }
 
-        public String peek() {
-            if (this.isEmpty())
-                return null;
-            return this.get(this.size() - 1);
-        }
+    public int getCursorColInLine() {
+        return selectionStart - lineStart(selectionStart);
+    }
 
-        public void revertLastEdit() {
-            String peek = this.peek();
-            if (peek == null)
-                return;
+    public int getCursorPixelX() {
+        return getPosX() + 5 + selectedStartPoint.x;
+    }
 
-            innerText = peek;
-            updateInnerText();
-            setCursor(innerText.length() - 1);
-            updateCursor();
+    public int getCursorPixelY() {
+        return getPosY() + textY + selectedStartPoint.y;
+    }
 
-            pop();
-        }
+    public void insertCompletion(String completion) {
+        int wordStart = selectionStart;
+        while (wordStart > 0 && innerText.charAt(wordStart - 1) != '\n' && !Character.isWhitespace(innerText.charAt(wordStart - 1)))
+            wordStart--;
+        pushUndo();
+        innerText = innerText.substring(0, wordStart) + completion + innerText.substring(selectionStart);
+        selectionStart = selectionEnd = wordStart + completion.length();
+        updateSelection();
+    }
+
+    public String[] getLines() {
+        return innerText.lines().toArray(String[]::new);
+    }
+
+    public String getContent() {
+        return innerText;
+    }
+
+    public void setKeyInterceptor(Function<Integer, Boolean> interceptor) {
+        this.keyInterceptor = interceptor;
+    }
+
+    public void setOnContentChanged(Consumer<Boolean> callback) {
+        this.onStateChanged = callback;
+    }
+
+    private void fireChanged(boolean typed) {
+        if (onStateChanged != null) onStateChanged.accept(typed);
+    }
+
+    public void clear() {
+        undoStack.clear();
+        redoStack.clear();
+        dragAnchor = -1;
+        preferredCol = -1;
+        cachedRows = List.of();
+        resetSelection();
+    }
+
+    public void clearUndoHistory() {
+        undoStack.clear();
+        redoStack.clear();
     }
 }

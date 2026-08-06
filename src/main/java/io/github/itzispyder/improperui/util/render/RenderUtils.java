@@ -1,6 +1,5 @@
 package io.github.itzispyder.improperui.util.render;
 
-import io.github.itzispyder.improperui.client.ImproperUIClient;
 import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.util.render.states.ImproperUIQuadState;
 import io.github.itzispyder.improperui.util.render.states.ImproperUIRoundRectState;
@@ -17,7 +16,6 @@ import org.joml.Matrix3x2fStack;
 public final class RenderUtils {
 
     private static final Minecraft mc = Minecraft.getInstance();
-    private static final ImproperUIClient system = ImproperUIClient.getInstance();
 
     // special
 
@@ -49,10 +47,6 @@ public final class RenderUtils {
                 color
         ));
         context.pose().popMatrix();
-    }
-
-    public static void drawDefaultCode(GuiGraphicsExtractor context, String code, int x, int y, boolean shadow, int color) {
-        context.text(system.codeRenderer, code, x, y, color, shadow);
     }
 
     // fill

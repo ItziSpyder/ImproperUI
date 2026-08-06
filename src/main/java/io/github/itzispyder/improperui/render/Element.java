@@ -643,6 +643,14 @@ public class Element {
 
     }
 
+    public void onChar(char c) {
+
+    }
+
+    public void onDrag(double mouseX, double mouseY) {
+
+    }
+
     public boolean pollClickable(int button, int mx, int my, boolean release) {
         if (clickThrough || parentPanel == null || visibility == Visibility.INVISIBLE)
             return false;
