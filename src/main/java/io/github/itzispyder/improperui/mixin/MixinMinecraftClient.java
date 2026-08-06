@@ -16,12 +16,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinMinecraftClient {
 
     @Shadow @Final private FontManager fontManager;
-    @Shadow @Final public static Identifier UNIFORM_FONT;
+    @Shadow @Final public static Identifier DEFAULT_FONT;
 
     @Inject(method = "updateFontOptions", at = @At("TAIL"))
     public void initFont(CallbackInfo ci) {
         ImproperUIClient improper = ImproperUIClient.getInstance();
         AccessorFontManager fonts = (AccessorFontManager) this.fontManager;
-        improper.codeRenderer = fonts.improperUI$createRenderer(UNIFORM_FONT);
+        improper.codeRenderer = fonts.improperUI$createRenderer(DEFAULT_FONT);
     }
 }

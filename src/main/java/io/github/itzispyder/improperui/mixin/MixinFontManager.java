@@ -16,7 +16,7 @@ import java.util.Map;
 public abstract class MixinFontManager implements AccessorFontManager {
 
     @Shadow @Final private Map<Identifier, FontSet> fontSets;
-    @Shadow @Final FontSet missingFontSet;
+    @Shadow @Final private FontSet missingFontSet;
 
     @Override
     public Font improperUI$createRenderer(Identifier fontId) {

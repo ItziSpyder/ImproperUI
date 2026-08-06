@@ -1,8 +1,5 @@
 package io.github.itzispyder.improperui.util.render;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import io.github.itzispyder.improperui.client.ImproperUIClient;
 import io.github.itzispyder.improperui.render.math.Color;
 import io.github.itzispyder.improperui.util.render.states.ImproperUIQuadState;
@@ -12,7 +9,6 @@ import io.github.itzispyder.improperui.util.render.states.ImproperUIRoundRectWir
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -24,6 +20,7 @@ public final class RenderUtils {
     private static final ImproperUIClient system = ImproperUIClient.getInstance();
 
     // special
+
     public static void drawBox(GuiGraphicsExtractor context, int x, int y, int w, int h, int color) {
         drawLine(context, x, y, x + w, y, color);
         drawLine(context, x, y + h, x + w, y + h, color);
@@ -272,15 +269,6 @@ public final class RenderUtils {
 
     public static void drawItem(GuiGraphicsExtractor context, ItemStack item, int x, int y) {
         drawItem(context, item, x, y, 1.0F);
-    }
-
-    // util
-    public static void drawBuffer(BufferBuilder buf, RenderType layer) {
-        layer.draw(buf.buildOrThrow());
-    }
-
-    public static BufferBuilder getBuffer(VertexFormat.Mode drawMode, VertexFormat format) {
-        return Tesselator.getInstance().begin(drawMode, format);
     }
 
     public static int width() {

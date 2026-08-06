@@ -322,7 +322,7 @@ public class ImproperUIPanel extends Screen {
 
     public void open() {
         var mc = Minecraft.getInstance();
-        if (mc.screen != this)
-            mc.execute(() -> mc.setScreen(this));
+        if (mc.gui.screen() != this)
+            mc.execute(() -> mc.gui.setScreen(this));
     }
 }
