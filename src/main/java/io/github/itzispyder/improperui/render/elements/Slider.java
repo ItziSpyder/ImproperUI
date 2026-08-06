@@ -60,7 +60,7 @@ public class Slider extends KeyHolderElement {
 
             var configKey = getConfigKey();
             if (configKey != null)
-                ScriptParser.getCache(configKey.modId).setProperty(configKey, val, true);
+                ScriptParser.getCache(configKey.modId()).setProperty(configKey, val, true);
         }
 
         double range = max - min;

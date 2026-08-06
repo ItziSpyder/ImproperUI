@@ -30,7 +30,7 @@ public class PropertyCache {
     public Properties.Value getProperty(ConfigKey key) {
         if (key == null)
             return null;
-        return get(key.path).getProperty(key.key);
+        return get(key.path()).getProperty(key.key());
     }
 
     public void setProperty(ConfigKey key, Object value) {
@@ -40,14 +40,14 @@ public class PropertyCache {
     public void setProperty(ConfigKey key, Object value, boolean save) {
         if (key == null)
             return;
-        get(key.path).setProperty(key.key, value.toString());
+        get(key.path()).setProperty(key.key(), value.toString());
         if (save)
             save(key);
     }
 
     public void save(ConfigKey key) {
         if (key != null)
-            get(key.path).write(modId, key.path);
+            get(key.path()).write(modId, key.path());
     }
 
     public void clear() {

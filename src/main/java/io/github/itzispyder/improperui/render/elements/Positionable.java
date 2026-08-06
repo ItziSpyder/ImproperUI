@@ -39,6 +39,6 @@ public class Positionable extends KeyHolderElement {
     @Override
     public ConfigKey getConfigKey() {
         var key = super.getConfigKey();
-        return new ConfigKey(key.modId, key.path, "improperui.elements.positionable.%s.%s".formatted(getId(), key.key));
+        return new ConfigKey(key.modId(), key.path(), "improperui.elements.positionable.%s.%s".formatted(getId(), key.key()));
     }
 }

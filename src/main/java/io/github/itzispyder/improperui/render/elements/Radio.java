@@ -52,7 +52,7 @@ public class Radio extends KeyHolderElement {
 
         var key = getConfigKey();
         if (key != null)
-            onSaveKey(ScriptParser.getCache(key.modId), key);
+            onSaveKey(ScriptParser.getCache(key.modId()), key);
     }
 
     @Override
