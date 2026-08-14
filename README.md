@@ -25,18 +25,11 @@ This screen is scripted using ImproperUI Script:
 
 ### Recent Changes
 ```yml
-Version: 0.0.7-BETA
+Version: 0.0.8-BETA
 
-Added:
-  - added support for collect() helper methods chain calls
-  - optimized ImproperUIPanel mouse events
-
-Patches:
-  - fixed ConfigReader readFloat
-  - fixed element children not updating parentPanel field
-  - fixed scrolling hitboxes
-  - fixed on-key element property not working
-  - fixed collectById() methods crashing on elements without IDs
+New:
+  - added support for 26.2 version of Minecraft
+  - revamped the way TextFields work to be more user friendly
 ```
 
 ### Adding ImproperUI to your Project
