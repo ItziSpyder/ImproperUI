@@ -6,9 +6,6 @@
   "mixins": [
   ],
   "client": [
-    "AccessorMinecraftClient",
-    "MixinFontManager",
-    "MixinMinecraftClient"
   ],
   "injectors": {
     "defaultRequire": 1

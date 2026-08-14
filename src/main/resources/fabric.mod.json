@@ -13,7 +13,6 @@
   "environment": "*",
   "entrypoints": {
     "client": [
-      "io.github.itzispyder.improperui.client.ImproperUIClient"
     ],
     "main": [
       "io.github.itzispyder.improperui.ImproperUI"

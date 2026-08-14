@@ -168,7 +168,7 @@ public class ImproperUIPanel extends Screen {
 
         for (var child : collectOrdered()) {
             if (child.pollScrollable(mx, my, verticalAmount > 0)) {
-                child.onScroll(mx, my, true);
+                child.onScroll(mx, my, verticalAmount > 0);
                 break;
             }
         }

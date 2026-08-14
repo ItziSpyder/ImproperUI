@@ -25,7 +25,7 @@ import static io.github.itzispyder.improperui.util.render.RenderUtils.*;
 public class TextField extends KeyHolderElement {
 
     private static final int UNDO_LIMIT = 100;
-    private static final int SEL_COLOR = 0xFF3B5EEB; // Fully opaque color so text highlight renders cleanly
+    private static final int SEL_COLOR = 0xFF3B5EEB;
     private static final int CURSOR_COLOR = 0xE0FFFFFF;
 
     private int selectionStart, selectionEnd;
@@ -67,12 +67,37 @@ public class TextField extends KeyHolderElement {
     public void onLoadKey(PropertyCache cache, ConfigKey key) {
         var property = cache.getProperty(key);
         if (property != null)
-            innerText = property.getQuote();
+            innerText = property.getQuote().replace("<newline>", "\n");
     }
 
     @Override
     public void onSaveKey(PropertyCache cache, ConfigKey key) {
-        cache.setProperty(key, "\"%s\"".formatted(innerText), true);
+        cache.setProperty(key, "\"%s\"".formatted(innerText.replace("\n", "<newline>")), true);
+    }
+
+    private void updateTextDimensions() {
+        cachedRows = mc.font.split(FormattedText.of(innerText), width - 10);
+        textHeight = cachedRows.size() * 9;
+    }
+
+    private void clampScroll() {
+        int minScroll = Math.min(5, height - textHeight - 5);
+        int maxScroll = 5;
+        textY = MathUtils.clamp(textY, minScroll, maxScroll);
+    }
+
+    public void ensureCursorVisible() {
+        updateTextDimensions();
+        int cursorY = selectedStartPoint.y;
+        int visibleTop = -textY + 5;
+        int visibleBottom = -textY + height - 14;
+
+        if (cursorY < visibleTop) {
+            textY = 5 - cursorY;
+        } else if (cursorY > visibleBottom) {
+            textY = height - 14 - cursorY;
+        }
+        clampScroll();
     }
 
     private int lineStart(int pos) {
@@ -631,19 +656,17 @@ public class TextField extends KeyHolderElement {
             onRenderChildren(context, mouseX, mouseY, delta);
         }
 
-        List<FormattedCharSequence> text = mc.font.split(FormattedText.of(innerText), width - 10);
-        cachedRows = text;
-        textHeight = text.size() * 9;
+        updateTextDimensions();
 
         int caret = y + textY;
 
         // Render selection highlight BEHIND the text lines
         if (hasRange()) {
-            renderRangeHighlight(context, text, x, y);
+            renderRangeHighlight(context, cachedRows, x, y);
         }
 
         if (selectedAll) {
-            for (FormattedCharSequence line : text) {
+            for (FormattedCharSequence line : cachedRows) {
                 RenderUtils.fillRect(context, x + 5, caret - 1, mc.font.width(line), 9, SEL_COLOR);
                 caret += 9;
             }
@@ -651,7 +674,7 @@ public class TextField extends KeyHolderElement {
         }
 
         // Render text on top
-        for (FormattedCharSequence line : text) {
+        for (FormattedCharSequence line : cachedRows) {
             context.text(mc.font, line, x + 5, caret, textColor.getHex(), false);
             caret += 9;
         }
@@ -730,8 +753,9 @@ public class TextField extends KeyHolderElement {
         super.onScroll(mx, my, up);
         int amount = up ? 1 : -1;
         for (int i = 0; i < ImproperUIPanel.SCROLL_MULTIPLIER; i++) {
-            textY = MathUtils.clamp(textY + amount, 5 - textHeight, 5);
+            textY += amount;
         }
+        clampScroll();
     }
 
     public void resetSelection() {
@@ -740,14 +764,16 @@ public class TextField extends KeyHolderElement {
     }
 
     public void updateSelection() {
+        updateTextDimensions();
         String str = innerText.substring(0, MathUtils.clamp(selectionStart, 0, innerText.length()));
         List<FormattedCharSequence> lines = mc.font.split(FormattedText.of(str), width - 10);
         if (lines == null || lines.isEmpty()) {
             selectedStartPoint.setLocation(0, 0);
-            return;
+        } else {
+            selectedStartPoint.x = mc.font.width(lines.get(lines.size() - 1));
+            selectedStartPoint.y = (lines.size() - 1) * 9;
         }
-        selectedStartPoint.x = mc.font.width(lines.get(Math.max(0, lines.size() - 1)));
-        selectedStartPoint.y = lines.size() * 9 - 9;
+        ensureCursorVisible();
     }
 
     public String getWordBeforeCursor() {
@@ -801,6 +827,7 @@ public class TextField extends KeyHolderElement {
 
     private void fireChanged(boolean typed) {
         if (onStateChanged != null) onStateChanged.accept(typed);
+        ensureCursorVisible();
     }
 
     public void clear() {
